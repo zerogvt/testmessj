@@ -4,6 +4,22 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--
+      The page talks to nobody, and this is what makes the browser enforce it
+      rather than leaving it a property of the current code: with
+      connect-src 'self' there is nowhere for a test to be sent, even if some
+      dependency one day tried.  default-src 'none' means anything not listed
+      here is refused outright.
+
+      frame-ancestors is deliberately absent: it only works as an HTTP header,
+      which GitHub Pages does not let us set, and a browser warns about it in
+      a meta element.  Nothing here holds a session or a credential, so being
+      framed buys an attacker nothing.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'" />
+    <meta name="referrer" content="no-referrer" />
     <title>testmess — shuffled exam variants</title>
     <meta
       name="description"
@@ -41,6 +57,7 @@
           </p>
         </div>
         <p id="source" class="status" role="status"></p>
+        <p id="warning" class="status warn" role="status"></p>
       </section>
 
       <section class="step" aria-labelledby="step-settings">
@@ -55,6 +72,17 @@
             <input id="seed" type="text" inputmode="text" placeholder="leave empty for a new one" />
           </label>
         </div>
+        <label class="check">
+          <input id="scrub" type="checkbox" checked />
+          <span>
+            Remove author details from the papers
+            <span class="optional">
+              — Word stores the name of whoever wrote and last saved the
+              document inside the file itself, and a copy handed to a class
+              carries it. Untick to keep the source's metadata as it is.
+            </span>
+          </span>
+        </label>
         <p class="hint">
           The same seed always produces exactly the same papers, which is what
           you want if you have to reprint one of them later. The seed used is
@@ -80,9 +108,9 @@
           it.
         </p>
         <p>
-          <a href="https://github.com/zerogvt/testmessj">Source code</a> ·
+          <a href="https://github.com/zerogvt/testmessj" rel="noreferrer">Source code</a> ·
           a TypeScript port of
-          <a href="https://github.com/zerogvt/testmess">testmess</a>
+          <a href="https://github.com/zerogvt/testmess" rel="noreferrer">testmess</a>
         </p>
       </footer>
     </main>

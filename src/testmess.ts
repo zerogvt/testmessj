@@ -8,6 +8,7 @@
 // the browser, the papers are built in the browser, and the only thing that
 // ever leaves the tab is the ZIP the user saves.
 
+import { carriedOverWarnings, scrubMetadata } from './metadata';
 import { parseExam, type Exam } from './parse';
 import { writeVariant, type Paper } from './render';
 import { makeVariants, randomSeed, type Variant } from './variants';
@@ -18,6 +19,12 @@ export interface GenerateOptions {
   count?: number;
   /** Seed; omitted means a fresh random one, which is reported back. */
   seed?: number;
+  /**
+   * Keep the source's author, company and template metadata in the papers.
+   * Off by default: a student paper naming its teacher is a leak the teacher
+   * did not ask for.  See `scrubMetadata`.
+   */
+  keepMetadata?: boolean;
 }
 
 export interface Generated {
@@ -26,6 +33,11 @@ export interface Generated {
   papers: Paper[];
   /** The seed actually used -- show it, so the run can be repeated. */
   seed: number;
+  /**
+   * What the source carries that scrubbing cannot reach -- comments, tracked
+   * changes -- for the page to warn about.
+   */
+  warnings: string[];
 }
 
 export async function generatePapers(
@@ -38,12 +50,18 @@ export async function generatePapers(
   const seed = options.seed ?? randomSeed();
 
   const exam = await parseExam(bytes, source);
+  // Scrubbed once, at the package level: every paper of the run is written
+  // from these parts, and the document part itself is untouched by it.
+  const written = options.keepMetadata
+    ? exam
+    : { ...exam, parts: scrubMetadata(exam.parts) };
+
   const variants = makeVariants(exam, count, seed);
   const papers: Paper[] = [];
   for (const variant of variants) {
-    papers.push(...await writeVariant(exam, variant));
+    papers.push(...await writeVariant(written, variant));
   }
-  return { exam, variants, papers, seed };
+  return { exam, variants, papers, seed, warnings: carriedOverWarnings(exam.parts) };
 }
 
 /**
@@ -65,6 +83,7 @@ export { makeVariant, makeVariants, keyLine, seedFrom, randomSeed, Rng } from '.
 export type { Variant, VariantOption, VariantQuestion } from './variants';
 export { renderDocumentXml, writeDocx, writeVariant, variantNames } from './render';
 export type { Paper } from './render';
+export { scrubMetadata, metadataNames, carriedOverWarnings } from './metadata';
 export { readZip, writeZip, zipEntry } from './zip';
 export type { ZipEntry } from './zip';
 export { sameMarker, KEY_ENTRY, KEY_HEADING, OPTION_LABEL, QUESTION_LABEL } from './markers';

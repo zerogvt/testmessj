@@ -42,9 +42,21 @@ change, not in the test.
   and that is the point: all the papers of one run go into one ZIP, or none do.
   Never offer a partial set.
 - **The source never leaves the tab.** No upload, no telemetry, no CDN, no
-  analytics. A teacher's unreleased exam is on that page. Anything that would
-  make a network request after load is a bug, and the missing runtime
-  dependencies are what keep it honest.
+  analytics, no cookies, no stored state. A teacher's unreleased exam is on
+  that page. Anything that would make a network request after load is a bug,
+  and the missing runtime dependencies are what keep it honest. The `<meta>`
+  CSP in `index.html` (`default-src 'none'`, `connect-src 'self'`) is the
+  browser-enforced half of that promise -- when it has to change, change it
+  deliberately and say why.
+- **The papers name nobody by default.** `scrubMetadata()` empties the author,
+  last-saved-by, company, manager, template and editing-time fields before the
+  papers are written. It touches `docProps/` only; the document, styles, fonts
+  and math table stay the originals. A teacher can opt back in from the page.
+  What a scrub cannot reach -- comments, tracked changes -- is *warned about*,
+  never silently rewritten: see `carriedOverWarnings()`.
+- **Document content never becomes markup.** Anything read out of a `.docx`
+  reaches the page through `textContent`, and the output document is built with
+  DOM calls, not string concatenation. No `innerHTML`, ever.
 
 ## Conventions
 
@@ -67,6 +79,14 @@ change, not in the test.
 
 ## Things that bit us
 
+- **`frame-ancestors` in a `<meta>` CSP is ignored** and Chromium logs an error
+  about it. GitHub Pages cannot set headers, so it is left out on purpose --
+  do not "fix" it back in.
+- **The samples are published with the page.** They were exported from Word and
+  carried a real name in `docProps/core.xml` until it was emptied on
+  2026-09-19. Any sample added later needs the same treatment before it is
+  committed: `dc:creator` and `cp:lastModifiedBy`, checked with
+  `metadataNames()`.
 - **`XMLSerializer` is not the same everywhere.** Chromium writes an XML
   declaration in front of a serialised document; jsdom and Firefox do not. Two
   declarations and Word will not open the part. `renderDocumentXml()` strips
@@ -93,9 +113,11 @@ machine: valid archive, every source part present, well-formed XML, original
 namespace declarations preserved, equations identical to the source markup for
 markup.
 
-Two things were confirmed by hand on 2026-09-19: Python's `zipfile` and the
-original `testmess` parser read the papers this code writes, and the built page
-produces papers that pass the same checks when driven in headless Chromium.
+Three things were confirmed by hand on 2026-09-19: Python's `zipfile` and the
+original `testmess` parser read the papers this code writes; the built page
+produces papers that pass the same checks when driven in headless Chromium; and
+the papers from that browser run carry no author, company or template path,
+with the browser's own log clean of CSP refusals.
 
 **Nobody has opened a testmessj paper in Word yet.** The package writer is new
 code. If a change touches how the archive or the document part is written, the

@@ -90,3 +90,26 @@ describe('crc32', () => {
     expect(crc32(new Uint8Array())).toBe(0);
   });
 });
+
+describe('limits', () => {
+  it('refuses an archive that is too big to be an exam', async () => {
+    // Only the length is inspected before anything is unpacked, so this costs
+    // nothing but the allocation.
+    const huge = new Uint8Array(65 * 1024 * 1024);
+    await expect(readZip(huge)).rejects.toThrow(/larger than/);
+  });
+
+  it('refuses a part that claims to unpack to absurdity', async () => {
+    const archive = await writeZip([zipEntry('bomb.bin', bytes('x'.repeat(100)))]);
+    // Overstate the uncompressed size in the central directory, the way a zip
+    // bomb does: it must be refused before anything is inflated.
+    const view = new DataView(archive.buffer, archive.byteOffset, archive.byteLength);
+    let central = -1;
+    for (let offset = 0; offset < archive.length - 4; offset += 1) {
+      if (view.getUint32(offset, true) === 0x02014b50) { central = offset; break; }
+    }
+    expect(central).toBeGreaterThan(-1);
+    view.setUint32(central + 24, 200 * 1024 * 1024, true);
+    await expect(readZip(archive)).rejects.toThrow(/more than this page will handle/);
+  });
+});

@@ -22,6 +22,19 @@ const ZIP64_MARKER = 0xffffffff;
 export const STORED = 0;
 export const DEFLATED = 8;
 
+// A .docx holding an exam is measured in tens of kilobytes; one holding a
+// scanned textbook in a few megabytes.  These caps are far above anything a
+// teacher will meet and far below what it takes to wedge a browser tab, so a
+// deliberately malformed archive -- a "zip bomb", a few kilobytes that inflate
+// to gigabytes -- is refused instead of being unpacked.
+const MAX_ARCHIVE_BYTES = 64 * 1024 * 1024;
+const MAX_PART_BYTES = 64 * 1024 * 1024;
+const MAX_TOTAL_BYTES = 256 * 1024 * 1024;
+
+function readable(bytes: number): string {
+  return `${Math.round(bytes / (1024 * 1024))} MB`;
+}
+
 export interface ZipEntry {
   name: string;
   /** Decompressed contents. */
@@ -132,6 +145,9 @@ function findEndOfCentralDirectory(view: DataView): number {
 
 /** Read every part of an archive, decompressing as it goes. */
 export async function readZip(bytes: Uint8Array): Promise<ZipEntry[]> {
+  if (bytes.length > MAX_ARCHIVE_BYTES) {
+    throw new Error(`that file is larger than ${readable(MAX_ARCHIVE_BYTES)}`);
+  }
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const eocd = findEndOfCentralDirectory(view);
   const count = view.getUint16(eocd + 10, true);
@@ -141,6 +157,7 @@ export async function readZip(bytes: Uint8Array): Promise<ZipEntry[]> {
   }
 
   const entries: ZipEntry[] = [];
+  let unpacked = 0;
   let offset = directory;
   for (let index = 0; index < count; index += 1) {
     if (view.getUint32(offset, true) !== CENTRAL_SIG) {
@@ -168,6 +185,13 @@ export async function readZip(bytes: Uint8Array): Promise<ZipEntry[]> {
     }
     if (view.getUint32(localOffset, true) !== LOCAL_SIG) {
       throw new Error(`corrupt local header for ${name}`);
+    }
+    // Checked before inflating, not after: the point is not to unpack it.
+    // The sizes are then verified against what actually came out, below, so a
+    // header that understates itself does not get past this either.
+    unpacked += uncompressedSize;
+    if (uncompressedSize > MAX_PART_BYTES || unpacked > MAX_TOTAL_BYTES) {
+      throw new Error(`${name} unpacks to more than this page will handle`);
     }
 
     // The local header has its own name and extra lengths, which need not

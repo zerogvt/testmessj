@@ -9,7 +9,9 @@
 
 import latinSample from '../samples/calculus_practice_test_2.docx?url';
 import greekSample from '../samples/calculus_practice_test_3.docx?url';
-import { bundlePapers, generatePapers, parseExam, seedFrom } from './testmess';
+import {
+  bundlePapers, carriedOverWarnings, generatePapers, parseExam, seedFrom,
+} from './testmess';
 import type { Exam, Paper } from './testmess';
 
 const SAMPLES: Record<string, { url: string; name: string }> = {
@@ -21,9 +23,11 @@ const fileInput = document.querySelector<HTMLInputElement>('#file')!;
 const dropZone = document.querySelector<HTMLElement>('#drop')!;
 const countInput = document.querySelector<HTMLInputElement>('#count')!;
 const seedInput = document.querySelector<HTMLInputElement>('#seed')!;
+const scrubInput = document.querySelector<HTMLInputElement>('#scrub')!;
 const generateButton = document.querySelector<HTMLButtonElement>('#generate')!;
 const downloadButton = document.querySelector<HTMLButtonElement>('#download')!;
 const sourceStatus = document.querySelector<HTMLElement>('#source')!;
+const warning = document.querySelector<HTMLElement>('#warning')!;
 const status = document.querySelector<HTMLElement>('#status')!;
 const results = document.querySelector<HTMLElement>('#results')!;
 
@@ -36,7 +40,7 @@ interface Source {
 let source: Source | null = null;
 let download: { url: string; name: string } | null = null;
 
-function message(target: HTMLElement, text: string, kind: 'info' | 'error' | 'ok' = 'info') {
+function message(target: HTMLElement, text: string, kind: 'info' | 'error' | 'ok' | 'warn' = 'info') {
   target.textContent = text;
   target.className = `status ${kind}`;
 }
@@ -53,6 +57,7 @@ function clearResults(): void {
 /** Read a chosen file, and parse it straight away so errors surface early. */
 async function useDocument(name: string, bytes: Uint8Array): Promise<void> {
   clearResults();
+  message(warning, '');
   source = null;
   generateButton.disabled = true;
   message(sourceStatus, `Reading ${name}…`);
@@ -64,6 +69,15 @@ async function useDocument(name: string, bytes: Uint8Array): Promise<void> {
     message(sourceStatus,
       `${title}${exam.questions.length} questions, options marked ${markers} — ${name}`,
       'ok');
+    // Comments and tracked changes cannot be scrubbed without rewriting the
+    // document, so the teacher is told rather than surprised.
+    const carried = carriedOverWarnings(exam.parts);
+    if (carried.length) {
+      message(warning,
+        `Careful: this document contains ${carried.join(' and ')}, which are `
+        + 'part of the file and will be carried into the papers. Remove them in '
+        + 'Word (Review tab) first if the class should not see them.', 'warn');
+    }
     generateButton.disabled = false;
   } catch (error) {
     message(sourceStatus, (error as Error).message, 'error');
@@ -129,6 +143,7 @@ async function build(): Promise<void> {
     const { papers, variants, seed } = await generatePapers(source.bytes, source.name, {
       count: Number(countInput.value),
       seed: chosenSeed(),
+      keepMetadata: !scrubInput.checked,
     });
     const archive = await bundlePapers(papers);
     const base = source.name.replace(/\.docx$/i, '');
@@ -189,4 +204,15 @@ downloadButton.addEventListener('click', () => {
   anchor.href = download.url;
   anchor.download = download.name;
   anchor.click();
+});
+
+// A blob URL keeps the whole set of papers alive in memory for as long as the
+// tab is open.  Nothing can read it from outside, but there is no reason for
+// somebody's exam to sit there after they have closed the page or walked away
+// from it, so it goes as soon as it is no longer needed.
+window.addEventListener('pagehide', () => {
+  if (download) {
+    URL.revokeObjectURL(download.url);
+    download = null;
+  }
 });

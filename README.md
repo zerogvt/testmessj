@@ -30,8 +30,18 @@ answers; the matching `professor_` copy has the key.
 
 **Your test never leaves your computer.** There is no upload and no server:
 the page is a static file, and the documents are read, shuffled and written
-inside your browser tab. You can put the page in a bookmark, or use it with
-the network switched off.
+inside your browser tab. There are no cookies, no analytics and no stored
+state of any kind — the page forgets everything when you close it. (GitHub,
+which hosts the page, logs the request that loaded it, the way every web host
+does. Nothing about your test is in that request.)
+
+**The papers name nobody.** Word records the author and the last person who
+saved a document *inside the file*, so a paper handed to a class would
+otherwise carry its teacher's name — one right-click away under File →
+Properties. Those fields, the company and the template path are emptied by
+default; untick *Remove author details* if you would rather keep them. Word
+comments and tracked changes cannot be removed this way, so the page warns you
+when your document has them and leaves them to you.
 
 **Reprinting one later?** Each run shows the *seed* it used. Type that seed
 into the seed box, with the same test and the same number of variants, and you
@@ -122,11 +132,12 @@ your_test.docx (read in the tab, never uploaded)
 | `src/xml.ts` | paragraph markup: text, labels, relabelling |
 | `src/zip.ts` | the archive layer — read a `.docx`, write one back |
 | `src/parse.ts` | `parseExam()` and `validateExam()` |
+| `src/metadata.ts` | taking the names out of a package, and warning about what stays |
 | `src/variants.ts` | the shuffle, and the seeded generator behind it |
 | `src/render.ts` | rebuilding `word/document.xml`, writing the packages |
 | `src/testmess.ts` | the whole pipeline in one call, plus the public exports |
 | `src/main.ts` | the page: file in, ZIP out |
-| `tests/` | 123 tests, `vitest` |
+| `tests/` | 138 tests, `vitest` |
 | `samples/*.docx` | the two sample tests, Latin-lettered and Greek-lettered |
 
 ### 1. `parseExam(bytes, name) -> Exam`
@@ -186,6 +197,21 @@ and cloned only at render time, so building a variant cannot corrupt the source.
 what lets the tests assert that the new key still points at the same answer
 *content* as the original, rather than merely at some letter.
 
+### 2b. `scrubMetadata(parts) -> ZipEntry[]`
+
+Empties the fields that name a person, an organisation or a machine:
+`dc:creator` and `cp:lastModifiedBy` in `docProps/core.xml`, and `Company`,
+`Manager`, `Template` and `TotalTime` in `docProps/app.xml`. The parts stay
+where they are — the package's relationships point at them — they simply stop
+naming anyone. Dates, the title and the revision count are left alone: when a
+test was written says nothing about who wrote it.
+
+`carriedOverWarnings()` covers what a scrub cannot reach. Comments and tracked
+changes carry both their authors' names and their content, and removing them
+would mean rewriting the document, its relationships and its content types —
+exactly the guesswork this program refuses to do. So the page says so and
+leaves the decision with the teacher.
+
 ### 3. `writeVariant(exam, variant) -> Paper[]`
 
 Called once per variant, and writes both copies.
@@ -237,7 +263,7 @@ and test tooling only, and none of them reaches the published page — about
 ```bash
 npm install
 npm run dev        # the page, on a local server, reloading as you edit
-npm test           # 123 tests
+npm test           # 138 tests
 npm run typecheck  # tsc --noEmit
 npm run build      # the static site, into dist/
 ```
@@ -264,6 +290,43 @@ Firefox do not), and a document part carrying two will not open. That was found
 by running the built page in a real headless Chromium, and is pinned by a test
 that makes the serialiser misbehave on purpose.
 
+## Privacy and hardening
+
+The page is meant to be safe to hand to a colleague without a caveat, so:
+
+- **Nothing is sent anywhere.** The only absolute URLs in the built bundle are
+  XML namespace identifiers (strings, never fetched), the data-URI favicon and
+  the two GitHub links in the footer. No CDN, no web font, no analytics, no
+  beacon; no cookies, no `localStorage`, no service worker.
+- **A Content-Security-Policy makes that a rule the browser enforces**, rather
+  than a property of today's code: `default-src 'none'` with `connect-src
+  'self'` leaves nowhere for a document to be sent, even if some future
+  dependency tried. It is a `<meta>` element because GitHub Pages cannot set
+  headers, which is also why `frame-ancestors` is absent — it is header-only.
+- **Papers are scrubbed of identity metadata** by default (above).
+- **The page never builds HTML from document content.** Everything that comes
+  out of a `.docx` reaches the page through `textContent`, so a hostile
+  document cannot inject markup; the XML is parsed with `DOMParser`, which does
+  not resolve external entities; and the output document is assembled with DOM
+  calls rather than string concatenation.
+- **A malformed archive is refused, not unpacked.** `readZip` caps the input at
+  64 MB, any single part at 64 MB and the total unpacked at 256 MB, checked
+  from the central directory *before* inflating, so a zip bomb cannot wedge the
+  tab. Sizes and CRCs are then verified against what actually came out.
+- **The download blob is released** when the next run starts and when the page
+  is hidden, so a set of papers does not sit in memory after the teacher has
+  finished.
+- **The build is pinned.** `package-lock.json` is committed and CI uses
+  `npm ci`; the GitHub Actions are pinned to commit SHAs rather than movable
+  tags, because whatever they run is what builds the page people trust with
+  their exams.
+
+The honest limits: GitHub (and its CDN) logs the HTTP request that serves the
+page, like any host — that is visible to GitHub, not to this code, and no
+document is part of it. And anything already inside a teacher's source
+document that is not metadata — comments, tracked changes, hidden text —
+travels with the papers by design, which is what the warning is for.
+
 ## Deployment
 
 `.github/workflows/deploy.yml` builds the page and publishes it to GitHub Pages
@@ -281,7 +344,7 @@ development machine: valid archive, every source part present, well-formed XML,
 the original namespace declarations preserved, and every equation identical to
 the source's markup for markup.
 
-Beyond the suite, two independent checks were run on 2026-09-19:
+Beyond the suite, these independent checks were run on 2026-09-19:
 
 - the papers this code writes were read back with **Python's** `zipfile` and
   parsed by the original `testmess` — a second implementation, and a stricter
@@ -289,6 +352,9 @@ Beyond the suite, two independent checks were run on 2026-09-19:
 - the **built page was driven in headless Chromium**, sample in and ZIP out,
   and the documents that came out of the browser passed the same checks. (That
   is how the double XML declaration above was found.)
+- the papers produced by that browser run were inspected for identity: no
+  author, no last-saved-by, no company, no template path, and all 31 equations
+  still present. The browser's log was checked for CSP refusals — clean.
 
 What has *not* happened yet: **nobody has opened one of these papers in Word.**
 The package writer here is new code, and structural checks are necessary but
