@@ -28,6 +28,67 @@
     <link rel="stylesheet" href="./src/style.css" />
   </head>
   <body>
+    <!--
+      The notice is static markup, not something a script paints in: if the
+      JavaScript fails to load, is blocked, or the browser is too old for
+      <dialog>, the warning is still on the page.  The modal below is the
+      acknowledgement on top of it, not a replacement for it.
+    -->
+    <aside class="banner" role="note">
+      <strong>Check every paper before you use it.</strong>
+      This tool is free software, provided with no warranty of any kind. It can
+      get a shuffle, an answer key or a document wrong — you are responsible for
+      checking what it produces.
+      <button type="button" class="link" id="show-notice">Read the full notice</button>
+    </aside>
+
+    <dialog id="notice" class="notice" role="alertdialog" aria-labelledby="notice-title">
+      <h2 id="notice-title">Before you use this tool</h2>
+      <p>
+        <strong>testmess is provided free of charge, “as is” and “as
+        available”, without warranty of any kind</strong>, express or implied,
+        including without limitation any implied warranty of merchantability,
+        fitness for a particular purpose, accuracy, or non-infringement.
+      </p>
+      <p>
+        It is software, and software gets things wrong. It may misread a
+        question or an answer key, shuffle an option wrongly, point a key at
+        the wrong answer, drop or alter part of your document, or produce a
+        file that Word cannot open — <strong>including in ways that are not
+        obvious at a glance</strong>.
+      </p>
+      <p>
+        <strong>You must check every document it produces</strong> — every
+        student copy and every answer key — before you print, distribute, sit
+        or grade an examination with it. Do not rely on it unchecked.
+      </p>
+      <p>
+        To the fullest extent permitted by applicable law, the authors and
+        contributors accept <strong>no liability</strong> for any loss or
+        damage of any kind arising out of or in connection with this tool or
+        anything it produces, including without limitation misprinted or
+        misgraded examinations, incorrect marks or results, wasted time, lost
+        or corrupted documents, or any direct, indirect, incidental, special,
+        consequential or exemplary damages, whether in contract, tort
+        (including negligence) or otherwise, and whether or not the
+        possibility of such damage was known.
+      </p>
+      <p>
+        You are responsible for the documents you process with it and for
+        following the rules of your school, university or employer. Nothing in
+        this notice excludes or limits any liability that cannot lawfully be
+        excluded or limited under the law that applies to you; if any part of
+        this notice is held unenforceable, the rest continues to apply.
+      </p>
+      <p>
+        By continuing you accept this notice and the terms of the
+        <a href="https://github.com/zerogvt/testmessj/blob/main/LICENSE" rel="noreferrer">MIT licence</a>.
+        If you do not accept them, close this page.
+      </p>
+      <form method="dialog">
+        <button id="accept-notice" type="submit" class="primary" autofocus>I understand — continue</button>
+      </form>
+    </dialog>
     <main>
       <header>
         <h1>testmess</h1>
@@ -92,6 +153,11 @@
 
       <section class="step" aria-labelledby="step-build">
         <h2 id="step-build"><span class="number">3</span> Build the papers</h2>
+        <p class="caution">
+          Whatever comes out, <strong>read it before it reaches a student</strong>:
+          check a paper against its answer key, and check that the equations
+          look right in Word.
+        </p>
         <div class="actions">
           <button id="generate" type="button" class="primary" disabled>Generate variants</button>
           <button id="download" type="button" hidden>Download papers.zip</button>
@@ -108,7 +174,13 @@
           it.
         </p>
         <p>
+          Provided as is, without warranty of any kind; no liability is accepted
+          for its output or for anything arising from its use.
+          <button type="button" class="link" id="show-notice-footer">Full notice</button>
+        </p>
+        <p>
           <a href="https://github.com/zerogvt/testmessj" rel="noreferrer">Source code</a> ·
+          <a href="https://github.com/zerogvt/testmessj/blob/main/LICENSE" rel="noreferrer">MIT licence</a> ·
           a TypeScript port of
           <a href="https://github.com/zerogvt/testmess" rel="noreferrer">testmess</a>
         </p>

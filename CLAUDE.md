@@ -54,6 +54,12 @@ change, not in the test.
   and math table stay the originals. A teacher can opt back in from the page.
   What a scrub cannot reach -- comments, tracked changes -- is *warned about*,
   never silently rewritten: see `carriedOverWarnings()`.
+- **The warning stays, and stays unmissable.** A banner in static markup (so
+  it survives the bundle failing to load) and a modal acknowledged on every
+  visit, closed only by its button. It is not a nag to be tidied away later:
+  people print what this tool produces and hand it to a class. Wording and
+  mechanism are pinned by `tests/disclaimer.test.ts`; the licence carries the
+  same disclaimer.
 - **Document content never becomes markup.** Anything read out of a `.docx`
   reaches the page through `textContent`, and the output document is built with
   DOM calls, not string concatenation. No `innerHTML`, ever.
@@ -79,6 +85,11 @@ change, not in the test.
 
 ## Things that bit us
 
+- **A prevented `cancel` does not keep a `<dialog>` open in Chromium.** Before
+  the page has user activation, its close watcher closes the modal on Escape
+  anyway. The notice is reopened from its `close` handler unless the
+  acknowledge button set the flag. Found in a real browser; jsdom shows
+  nothing of this.
 - **`frame-ancestors` in a `<meta>` CSP is ignored** and Chromium logs an error
   about it. GitHub Pages cannot set headers, so it is left out on purpose --
   do not "fix" it back in.

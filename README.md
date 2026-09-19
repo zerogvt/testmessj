@@ -10,6 +10,31 @@ This is [testmess](https://github.com/zerogvt/testmess) rewritten in
 TypeScript, so it runs **in the browser**. There is nothing to install and
 nothing to learn: open the page, pick your test, click one button.
 
+## Disclaimer
+
+**This tool is provided free of charge, “as is”, without warranty of any
+kind**, express or implied, including any implied warranty of merchantability,
+fitness for a particular purpose, accuracy or non-infringement.
+
+It is software, and software gets things wrong. It may misread a question or
+an answer key, shuffle an option wrongly, point a key at the wrong answer, drop
+or alter part of a document, or produce a file that Word cannot open —
+including in ways that are not obvious at a glance.
+
+**Check every document it produces** — every student copy and every answer key
+— before you print, distribute, sit or grade an examination with it.
+
+To the fullest extent permitted by applicable law, the authors and contributors
+accept **no liability** for any loss or damage arising out of or in connection
+with this tool or anything it produces, including misprinted or misgraded
+examinations, incorrect marks, wasted time, lost or corrupted documents, or any
+direct, indirect, incidental, special, consequential or exemplary damages,
+whether in contract, tort (including negligence) or otherwise. Nothing here
+excludes any liability that cannot lawfully be excluded. See [LICENSE](LICENSE).
+
+The page says the same thing, in a banner that does not go away and a notice
+that has to be acknowledged on every visit.
+
 ## TL;DR — for the teacher
 
 **1. Open the page:** <https://zerogvt.github.io/testmessj/>
@@ -137,7 +162,7 @@ your_test.docx (read in the tab, never uploaded)
 | `src/render.ts` | rebuilding `word/document.xml`, writing the packages |
 | `src/testmess.ts` | the whole pipeline in one call, plus the public exports |
 | `src/main.ts` | the page: file in, ZIP out |
-| `tests/` | 138 tests, `vitest` |
+| `tests/` | 161 tests, `vitest` |
 | `samples/*.docx` | the two sample tests, Latin-lettered and Greek-lettered |
 
 ### 1. `parseExam(bytes, name) -> Exam`
@@ -263,7 +288,7 @@ and test tooling only, and none of them reaches the published page — about
 ```bash
 npm install
 npm run dev        # the page, on a local server, reloading as you edit
-npm test           # 138 tests
+npm test           # 161 tests
 npm run typecheck  # tsc --noEmit
 npm run build      # the static site, into dist/
 ```
@@ -316,6 +341,13 @@ The page is meant to be safe to hand to a colleague without a caveat, so:
 - **The download blob is released** when the next run starts and when the page
   is hidden, so a set of papers does not sit in memory after the teacher has
   finished.
+- **The notice cannot be skipped.** The banner is static markup, so it is on
+  the page even if the bundle never loads; the modal is shown on every visit,
+  survives Escape (Chromium's close watcher closes a modal on Escape regardless
+  of a prevented `cancel` before the page has been interacted with, so a close
+  that was not the button puts it straight back), and nothing about the
+  acknowledgement is stored. `tests/disclaimer.test.ts` holds the wording and
+  the mechanism in place.
 - **The build is pinned.** `package-lock.json` is committed and CI uses
   `npm ci`; the GitHub Actions are pinned to commit SHAs rather than movable
   tags, because whatever they run is what builds the page people trust with
@@ -336,6 +368,11 @@ on every push to `main`; the test suite is the gate. Enable it once, by hand:
 The build uses a relative base (`base: './'`), so the same `dist/` works at
 `https://<user>.github.io/testmessj/`, at a custom domain, or opened from a
 local web server.
+
+## Licence
+
+[MIT](LICENSE). The copyright line reads "the testmessj authors" rather than a
+name, to match the samples, which carry none either.
 
 ## Verification
 

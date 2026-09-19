@@ -30,6 +30,7 @@ const sourceStatus = document.querySelector<HTMLElement>('#source')!;
 const warning = document.querySelector<HTMLElement>('#warning')!;
 const status = document.querySelector<HTMLElement>('#status')!;
 const results = document.querySelector<HTMLElement>('#results')!;
+const notice = document.querySelector<HTMLDialogElement>('#notice')!;
 
 interface Source {
   name: string;
@@ -162,6 +163,53 @@ async function build(): Promise<void> {
     generateButton.disabled = false;
   }
 }
+
+// --------------------------------------------------------------------------
+// The notice
+// --------------------------------------------------------------------------
+//
+// Shown on every visit and closed only by the button: nothing is remembered
+// between visits, because remembering would mean storing a flag in somebody's
+// browser, and this page stores nothing.  A teacher meets it each time they
+// come to build papers, which is exactly when it matters.
+
+function openNotice(): void {
+  if (typeof notice.showModal === 'function') {
+    if (!notice.open) {
+      notice.showModal();
+    }
+  } else {
+    // No <dialog> support: show it in the page rather than not at all.
+    notice.setAttribute('open', '');
+  }
+}
+
+// Escape must not dismiss it; the button is the acknowledgement.
+//
+// Preventing `cancel` is not enough on its own: Chromium's close watcher
+// closes a modal on Escape regardless when the page has not been interacted
+// with yet, which is exactly the moment this notice is on screen.  So a close
+// that was not the button putting it back is undone -- verified in a real
+// browser, because this is precisely the kind of thing jsdom would let pass.
+let acknowledged = false;
+
+notice.addEventListener('cancel', (event) => event.preventDefault());
+notice.addEventListener('close', () => {
+  if (!acknowledged) {
+    openNotice();
+  }
+});
+document.querySelector<HTMLButtonElement>('#accept-notice')!
+  .addEventListener('click', () => {
+    acknowledged = true;
+  });
+
+for (const id of ['show-notice', 'show-notice-footer']) {
+  document.querySelector<HTMLButtonElement>(`#${id}`)?.addEventListener(
+    'click', () => openNotice());
+}
+
+openNotice();
 
 fileInput.addEventListener('change', () => {
   const file = fileInput.files?.[0];

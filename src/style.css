@@ -11,6 +11,10 @@
   --ok: #2c6b3f;
   --warn: #8a5a12;
   --error: #9b2c22;
+  --banner-bg: #fdf3d8;
+  --banner-line: #c89a2b;
+  --banner-ink: #4a3608;
+  --caution-bg: #fdf7e8;
   color-scheme: light;
 }
 
@@ -26,12 +30,84 @@
     --ok: #8fd0a3;
     --warn: #e8c07a;
     --error: #f2938a;
+    --banner-bg: #33290f;
+    --banner-line: #9c7c28;
+    --banner-ink: #f4e4bd;
+    --caution-bg: #262013;
     color-scheme: dark;
   }
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* The standing warning: it sits above everything, scrolls away with the page
+   like the rest of the content, and has no dismiss button by design. */
+.banner {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin: -2.5rem -1rem 1.6rem;
+  padding: 0.85rem 1.2rem;
+  background: var(--banner-bg);
+  border-bottom: 2px solid var(--banner-line);
+  color: var(--banner-ink);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.banner .link,
+.banner strong {
+  color: inherit;
+}
+
+.banner .link {
+  text-decoration: underline;
+}
+
+.notice {
+  max-width: 38rem;
+  padding: 1.6rem 1.8rem 1.4rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.notice::backdrop {
+  background: rgb(0 0 0 / 65%);
+}
+
+.notice h2 {
+  display: block;
+  margin-top: 0;
+  font-size: 1.15rem;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.notice p {
+  margin: 0 0 0.85rem;
+}
+
+.notice form {
+  margin-top: 1.2rem;
+  text-align: right;
+}
+
+.caution {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border-left: 3px solid var(--banner-line);
+  background: var(--caution-bg);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 body {
@@ -275,6 +351,15 @@ a {
 @media (max-width: 30rem) {
   body {
     padding: 1.5rem 0.9rem 3rem;
+  }
+
+  .banner {
+    margin: -1.5rem -0.9rem 1.2rem;
+    text-align: left;
+  }
+
+  .notice {
+    padding: 1.1rem 1.1rem 1rem;
   }
 
   .step {
