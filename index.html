@@ -1,0 +1,91 @@
+<!doctype html>
+<!-- feature: exam-variants -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>testmess — shuffled exam variants</title>
+    <meta
+      name="description"
+      content="Turn one multiple-choice test in Word into any number of shuffled variants, student copy and professor copy. Runs entirely in your browser." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext y='14' font-size='14'%3E%F0%9F%94%80%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>testmess</h1>
+        <p class="lede">
+          One multiple-choice test in Word, any number of shuffled variants —
+          each written twice: a <strong>student copy</strong> (questions and
+          options) and a <strong>professor copy</strong> (the same paper, plus
+          the answer key on its own last page).
+        </p>
+        <p class="privacy">
+          Your test never leaves this tab. There is no upload and no server:
+          the documents are read, shuffled and written here, on your computer.
+        </p>
+      </header>
+
+      <section class="step" aria-labelledby="step-source">
+        <h2 id="step-source"><span class="number">1</span> Choose the test</h2>
+        <div id="drop" class="drop">
+          <label class="file">
+            <input id="file" type="file" accept=".docx" />
+            <span>Choose a .docx file</span>
+          </label>
+          <p class="hint">
+            or drag it here — or try a sample:
+            <button type="button" class="link" data-sample="latin">Latin (A)–(D)</button>
+            <button type="button" class="link" data-sample="greek">Greek α)–δ)</button>
+          </p>
+        </div>
+        <p id="source" class="status" role="status"></p>
+      </section>
+
+      <section class="step" aria-labelledby="step-settings">
+        <h2 id="step-settings"><span class="number">2</span> Settings</h2>
+        <div class="settings">
+          <label>
+            Variants
+            <input id="count" type="number" min="1" max="60" step="1" value="3" />
+          </label>
+          <label>
+            Seed <span class="optional">(optional)</span>
+            <input id="seed" type="text" inputmode="text" placeholder="leave empty for a new one" />
+          </label>
+        </div>
+        <p class="hint">
+          The same seed always produces exactly the same papers, which is what
+          you want if you have to reprint one of them later. The seed used is
+          shown with the results.
+        </p>
+      </section>
+
+      <section class="step" aria-labelledby="step-build">
+        <h2 id="step-build"><span class="number">3</span> Build the papers</h2>
+        <div class="actions">
+          <button id="generate" type="button" class="primary" disabled>Generate variants</button>
+          <button id="download" type="button" hidden>Download papers.zip</button>
+        </div>
+        <p id="status" class="status" role="status"></p>
+        <div id="results" class="results"></div>
+      </section>
+
+      <footer>
+        <p>
+          Equations written with the Word equation editor survive untouched:
+          every stem and option is carried as the raw paragraph markup from
+          your document, and the only thing rewritten is the label in front of
+          it.
+        </p>
+        <p>
+          <a href="https://github.com/zerogvt/testmessj">Source code</a> ·
+          a TypeScript port of
+          <a href="https://github.com/zerogvt/testmess">testmess</a>
+        </p>
+      </footer>
+    </main>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
