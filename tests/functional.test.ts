@@ -14,6 +14,7 @@ import {
   generatePapers, makeVariants, parseExam, readZip, sameMarker, writeZip,
   type Paper,
 } from '../src/testmess';
+import { KEY_HEADING } from '../src/markers';
 import { paragraphText } from '../src/xml';
 import {
   FIXTURES, bodyParagraphs, countMath, documentRoot, hasKeyHeading, keyEntries,
@@ -171,35 +172,101 @@ describe.each(FIXTURES)('$name sample', (fixture) => {
   });
 });
 
-describe('a test written in Greek', () => {
-  it('is read when its key page is headed in Greek', async () => {
-    // The page speaks Greek, so the documents it is given will too: a teacher
-    // heading the last page "ΑΠΑΝΤΗΣΕΙΣ" must not be told there is no key.
-    // Built from a sample rather than a fixture file, so it cannot go stale.
-    const parts = await readZip(sampleBytes('calculus_practice_test_3.docx'));
-    const rewritten = parts.map((part) => {
-      if (part.name !== 'word/document.xml') {
-        return part;
-      }
-      const xml = new TextDecoder().decode(part.data).replace('Answer Key', 'ΑΠΑΝΤΗΣΕΙΣ');
-      return { ...part, data: new TextEncoder().encode(xml) };
-    });
+/**
+ * The same test with its key page headed differently.
+ *
+ * Built from a sample rather than kept as a fixture file, so these cannot go
+ * stale when the samples are re-exported -- and so each heading is exercised
+ * against a real document, package and all, rather than against the regex.
+ */
+async function headedWith(file: string, heading: string): Promise<Uint8Array> {
+  const parts = await readZip(sampleBytes(file));
+  return writeZip(parts.map((part) => {
+    if (part.name !== 'word/document.xml') {
+      return part;
+    }
+    const xml = new TextDecoder().decode(part.data);
+    expect(xml).toContain('>Answer Key<');
+    return {
+      ...part,
+      data: new TextEncoder().encode(xml.replace('>Answer Key<', `>${heading}<`)),
+    };
+  }));
+}
 
-    const exam = await parseExam(await writeZip(rewritten), 'greek_headed.docx');
+describe.each([
+  // English, as teachers actually write it
+  ['Answer Key', 'calculus_practice_test_2.docx'],
+  ['ANSWER KEY', 'calculus_practice_test_2.docx'],
+  ['Answer Keys', 'calculus_practice_test_2.docx'],
+  ['Answers', 'calculus_practice_test_2.docx'],
+  ['Key', 'calculus_practice_test_2.docx'],
+  ['Keys', 'calculus_practice_test_2.docx'],
+  ['KEY', 'calculus_practice_test_2.docx'],
+  ['Solutions', 'calculus_practice_test_2.docx'],
+  ['Answer Key — Variant A', 'calculus_practice_test_2.docx'],
+  ['Answers:', 'calculus_practice_test_2.docx'],
+  // Greek, where a whole paper may be Greek
+  ['Λύσεις', 'calculus_practice_test_3.docx'],
+  ['ΛΥΣΕΙΣ', 'calculus_practice_test_3.docx'],
+  ['Απαντήσεις', 'calculus_practice_test_3.docx'],
+  ['ΑΠΑΝΤΗΣΕΙΣ', 'calculus_practice_test_3.docx'],
+  ['Κλείδα απαντήσεων', 'calculus_practice_test_3.docx'],
+  ['Σωστές απαντήσεις', 'calculus_practice_test_3.docx'],
+  ['Απαντήσεις:', 'calculus_practice_test_3.docx'],
+])('a key page headed "%s"', (heading, file) => {
+  const expected = file === 'calculus_practice_test_2.docx' ? FIXTURES[0] : FIXTURES[1];
+
+  it('is found, and its answers are read', async () => {
+    const exam = await parseExam(await headedWith(file, heading), 'headed.docx');
+    expect(exam.hasKey).toBe(true);
     expect(exam.questions).toHaveLength(10);
-    expect(exam.questions.map((question) => question.answer))
-      .toEqual(Object.values(FIXTURES[1].key));
-    expect(exam.keyTemplates.heading).not.toBeNull();
+    expect(Object.fromEntries(
+      exam.questions.map((question) => [question.number, question.answer])))
+      .toEqual(expected.key);
+  });
 
-    // And the papers it writes keep that heading, rather than reverting to
-    // English: the professor copy is stamped from the source's own paragraph.
-    const { papers } = await generatePapers(
-      await writeZip(rewritten), 'greek_headed.docx', { count: 1, seed: 3 });
-    const professor = papers.find((paper) => paper.kind === 'professor')!;
-    const texts = paragraphTexts(await documentRoot(professor.bytes));
-    expect(texts.some((text) => text.includes('ΑΠΑΝΤΗΣΕΙΣ'))).toBe(true);
-    // The heading is the source's own paragraph, not one this program writes,
-    // so it stays Greek.  (The banner is a different matter -- see below.)
-    expect(texts.some((text) => text.trim() === 'Answer Key')).toBe(false);
+  it('produces a professor copy that carries that heading, and the right key',
+    async () => {
+      const bytes = await headedWith(file, heading);
+      const { papers, variants } = await generatePapers(bytes, 'headed.docx',
+        { count: 1, seed: 7 });
+      expect(papers.map((item) => item.kind)).toEqual(['student', 'professor']);
+
+      const professor = papers.find((item) => item.kind === 'professor')!;
+      const texts = paragraphTexts(await documentRoot(professor.bytes));
+      // The heading is the source's own paragraph, reused as it was written.
+      expect(texts.some((text) => text.trim() === heading.trim())).toBe(true);
+      expect(keyEntries(texts)).toEqual(
+        variants[0].questions.map((question) => [question.number, question.answer]));
+
+      // And the student copy still carries no key of any spelling.
+      const student = papers.find((item) => item.kind === 'student')!;
+      const studentTexts = paragraphTexts(await documentRoot(student.bytes));
+      expect(hasKeyHeading(studentTexts)).toBe(false);
+      expect(keyEntries(studentTexts)).toHaveLength(0);
+    });
+});
+
+describe('a heading that only looks like one', () => {
+  it.each([
+    'Key concepts covered in this test',
+    'Answer the following questions in the space provided',
+    'Απαντήστε στην ερώτηση που ακολουθεί',
+  ])('%s is not read as the start of the key page', async (line) => {
+    // A sentence that merely opens with "Key" or "Answer" would swallow every
+    // question after it, so the whole-paragraph match matters as much as the
+    // words do.
+    expect(KEY_HEADING.test(line)).toBe(false);
+
+    // And in a real document: with the heading replaced by prose, the lines
+    // below it are no longer read as key entries -- "1.  A" becomes a question
+    // with no options, and the document is refused rather than mis-parsed.
+    const bytes = await headedWith('calculus_practice_test_2.docx', line);
+    await expect(parseExam(bytes, 'prose.docx'))
+      .rejects.toMatchObject({ code: 'too-few-options' });
   });
 });
+
+// (A test headed in Greek had its own block here; every heading, Greek
+// included, is now exercised by the table above.)

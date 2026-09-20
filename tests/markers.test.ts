@@ -56,24 +56,36 @@ describe('key entries', () => {
     expect(KEY_ENTRY.exec('1.  Evaluate the limit')).toBeNull();
   });
 
-  it('finds the key heading however it is cased', () => {
-    expect(KEY_HEADING.test('Answer Key')).toBe(true);
-    expect(KEY_HEADING.test('ANSWER KEY')).toBe(true);
-    expect(KEY_HEADING.test('  Answer Key')).toBe(true);
-    expect(KEY_HEADING.test('Answer sheet')).toBe(false);
-    expect(KEY_HEADING.test('Questions')).toBe(false);
+  it.each([
+    'Answer Key', 'ANSWER KEY', 'answer key', 'Answer Keys', 'AnswerKey',
+    'Key', 'Keys', 'KEY', 'key', 'Answers', 'Answer', 'ANSWERS',
+    'Solutions', 'Solution', 'Answer Key:', '  Keys  ',
+    'Answer Key — Variant A', 'Answer Key (page 3)',
+  ])('reads %s as the key heading', (text) => {
+    expect(KEY_HEADING.test(text)).toBe(true);
   });
 
-  it.each(['Απαντήσεις', 'ΑΠΑΝΤΗΣΕΙΣ', 'απαντήσεις', 'Απαντήσεις:', 'Λύσεις',
-    'ΛΥΣΕΙΣ', 'Κλείδα απαντήσεων', '  Απαντήσεις'])(
-    'finds a Greek key heading: %s', (text) => {
-      // Uppercase Greek drops its accents, and a heading is usually written in
-      // capitals, so both spellings have to be recognised.
-      expect(KEY_HEADING.test(text)).toBe(true);
-    });
+  it.each([
+    'Λύσεις', 'ΛΥΣΕΙΣ', 'λύσεις', 'Λυσεις', 'Απαντήσεις', 'ΑΠΑΝΤΗΣΕΙΣ',
+    'απαντήσεις', 'Κλείδα', 'Κλείδα απαντήσεων', 'ΚΛΕΙΔΑ ΑΠΑΝΤΗΣΕΩΝ',
+    'Σωστές απαντήσεις', 'ΣΩΣΤΕΣ ΑΠΑΝΤΗΣΕΙΣ', 'Απαντητικό', 'Απαντήσεις:',
+    'Λύσεις – Παραλλαγή Α',
+  ])('reads %s as the key heading too', (text) => {
+    // Uppercase Greek drops its accents, and a heading is usually written in
+    // capitals, so both spellings have to be recognised.
+    expect(KEY_HEADING.test(text)).toBe(true);
+  });
 
-  it.each(['Απαντήστε στην ερώτηση', '1. Απαντήστε σύντομα', 'Ερωτήσεις',
-    'Απαντητικό φύλλο'])('does not read %s as a key heading', (text) => {
+  it.each([
+    'Key concepts covered in this test', 'Keyboard shortcuts',
+    'Answer the following questions', 'Answer sheet',
+    'Keys to the kingdom are many', 'Απαντήστε στην ερώτηση',
+    'Απαντήσεις που δόθηκαν από τους μαθητές', 'Questions', 'Ερωτήσεις',
+    'Choose the best answer. Mark one letter (A–D) for each question.',
+    '1. Answers', '(A) Answers', 'Multiple Choice  ·  10 Questions',
+  ])('does not read %s as the key heading', (text) => {
+    // Matching the whole paragraph rather than its opening is what makes a
+    // heading as short as "Key" safe to accept.
     expect(KEY_HEADING.test(text)).toBe(false);
   });
 });

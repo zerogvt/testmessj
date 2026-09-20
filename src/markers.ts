@@ -20,13 +20,26 @@ export const OPTION_LABEL = new RegExp(
   String.raw`^\s*[(\[]?\s*(${MARKER})\s*[.)\]]`, 'du');
 export const KEY_ENTRY = new RegExp(
   String.raw`^\s*(\d+)\s*[.)]\s*[(\[]?\s*(${MARKER})\s*[)\]]?\s*$`, 'du');
-// The heading that opens the key page, in either language the page speaks.
-// Greek needs the accents written as alternatives: uppercase Greek drops them
-// ("ΑΠΑΝΤΗΣΕΙΣ"), so /απαντήσεις/i alone would miss a heading in capitals --
-// which is how a heading is usually written.  \b is no use after a Greek
-// letter either (\w is ASCII), hence the explicit "not a letter" look-ahead.
-export const KEY_HEADING =
-  /^\s*(answer\s*key\b|(?:απαντ[ήη]σεις|λ[ύυ]σεις|κλε[ίι]δα)(?![\p{L}]))/iu;
+// The heading that opens the key page.
+//
+// Teachers write it every way there is: "Answer Key", "ANSWER KEY", "Answers",
+// a bare "Key" or "Keys", "Λύσεις", "ΛΥΣΕΙΣ", "Απαντήσεις", "Κλείδα
+// απαντήσεων".  Greek needs its accents written as alternatives, because
+// uppercase Greek drops them ("ΑΠΑΝΤΗΣΕΙΣ") and a heading is usually in
+// capitals.
+//
+// The match is against the *whole* paragraph rather than its opening, which is
+// what makes the short words safe to accept: "Key" is a key page, "Key
+// concepts covered in this test" is a sentence in the front matter.  A
+// separator may be followed by a short tail, so "Answer Key — Variant A" and
+// "Απαντήσεις:" are still headings.
+const KEY_WORDS = [
+  'answer\\s*keys?', 'answers?', 'keys?', 'solutions?',
+  'σωστ[έε]ς\\s+απαντ[ήη]σεις', 'απαντ[ήη]σεις', 'απαντητικ[όο]',
+  'λ[ύυ]σει[ςσ]', 'κλε[ίι]δα(?:\\s+απαντ[ήη]σεων)?',
+];
+export const KEY_HEADING = new RegExp(
+  `^\\s*(?:${KEY_WORDS.join('|')})\\s*(?:[:.,·()\\[\\]/\\-–—]\\s*.{0,40})?$`, 'iu');
 
 /** Case-fold a marker for comparison: "A" ~ "a", "Α" ~ "α", "Σ" ~ "ς". */
 export function foldMarker(marker: string): string {

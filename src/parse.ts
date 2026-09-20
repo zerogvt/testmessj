@@ -103,7 +103,10 @@ export async function parseExam(bytes: Uint8Array, source = 'test.docx'): Promis
     }
     const text = paragraphText(child).trim();
 
-    if (KEY_HEADING.test(text)) {
+    // A key page comes after the questions, and that ordering is what makes a
+    // heading as short as "Key" or "Answers" safe to recognise: before the
+    // first question the same word is far more likely to be front matter.
+    if (questions.length > 0 && KEY_HEADING.test(text)) {
       section = 'key';
       sawKeyPage = true;
       keyTemplates.heading = child;

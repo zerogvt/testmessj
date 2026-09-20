@@ -125,10 +125,22 @@ to open that file in Word:
 - Each option is its own paragraph starting with a marker: `(A)`, `A)`, `A.`,
   `a)`, `[A]`, `α)`, `(iii)` — any single letter in any script (Latin, Greek,
   Cyrillic, either case) or a short roman numeral.
-- **Optionally**, a last page headed **Answer Key** (or `Απαντήσεις`, `Λύσεις`,
-  `Κλείδα`), one entry per paragraph: `1.  A`, `1)  α`, `1.  (c)`. The entries
-  may be in any order; they are matched by question number. Key and options
-  need not agree on case (`Α` finds `α`).
+- **Optionally**, a last page whose heading opens the answers, one entry per
+  paragraph: `1.  A`, `1)  α`, `1.  (c)`. The entries may be in any order; they
+  are matched by question number. Key and options need not agree on case
+  (`Α` finds `α`).
+
+  The heading may be written any of these ways, in any case: **Answer Key**,
+  **Answer Keys**, **Answers**, **Key**, **Keys**, **Solutions** — or, in
+  Greek, **Απαντήσεις**, **Λύσεις**, **Κλείδα**, **Κλείδα απαντήσεων**,
+  **Σωστές απαντήσεις**, **Απαντητικό**, accents optional because uppercase
+  Greek drops them. A separator may follow it, so `Answer Key — Variant A` and
+  `Απαντήσεις:` are headings too.
+
+  It has to be the *whole* paragraph, and it has to come after the questions.
+  That is what makes a heading as short as `Key` safe to accept: `Key` is a key
+  page, `Key concepts covered in this test` is a sentence in the front matter,
+  and a word like `Answers` above the first question is not a key page at all.
 
 A test with **no key page at all** is accepted, and produces student copies
 only: no professor copy is written, because the professor copy exists to carry
@@ -169,10 +181,10 @@ choice rides in the URL, not in the browser.
 
 Two things follow from the page speaking Greek:
 
-- **A Greek key page is recognised.** The heading that opens the answers may
-  read `Answer Key`, `Απαντήσεις`, `Λύσεις` or `Κλείδα`, in any case and with or
-  without accents (uppercase Greek drops them, and a heading is usually in
-  capitals).
+- **A Greek key page is recognised** — `Απαντήσεις`, `Λύσεις`, `Κλείδα` and the
+  rest, in any case and with or without accents. See
+  [what the source document must look like](#what-the-source-document-must-look-like)
+  for the full list, English included.
 - **The one line this program writes into a paper follows the language**: the
   professor copy's "Variant N" banner. Everything else in the document is the
   teacher's own, so a student copy is byte-for-byte identical whichever flag is
@@ -224,7 +236,7 @@ your_test.docx (read in the tab, never uploaded)
 | `src/render.ts` | rebuilding `word/document.xml`, writing the packages |
 | `src/testmess.ts` | the whole pipeline in one call, plus the public exports |
 | `src/main.ts` | the page: file in, ZIP out |
-| `tests/` | 239 tests, `vitest` |
+| `tests/` | 308 tests, `vitest` |
 | `samples/*.docx` | three sample tests — Latin-lettered, Greek-lettered, and Greek with no answer key; also the page's static directory, so they are served for download under their own names |
 
 ### 1. `parseExam(bytes, name) -> Exam`
@@ -353,7 +365,7 @@ and test tooling only, and none of them reaches the published page — about
 ```bash
 npm install
 npm run dev        # the page, on a local server, reloading as you edit
-npm test           # 239 tests
+npm test           # 308 tests
 npm run typecheck  # tsc --noEmit
 npm run build      # the static site, into dist/
 ```

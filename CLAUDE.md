@@ -34,6 +34,14 @@ change, not in the test.
   with `sameMarker()`, which case-folds.
 - **The key follows the shuffle by content**, not by marker: after shuffling it
   must point at the same answer text it pointed at in the source.
+- **The key heading is matched whole, and only after the questions.** Teachers
+  write it as "Answer Key", "Answers", a bare "Key", "Λύσεις", "ΑΠΑΝΤΗΣΕΙΣ",
+  "Κλείδα απαντήσεων"; `KEY_WORDS` in `markers.ts` holds the list. Two rules
+  keep the short words from eating a paper: the pattern matches the *entire*
+  paragraph (a separator may carry a short tail, "Answer Key — Variant A"), and
+  `parseExam` only accepts a heading once at least one question has been read.
+  Loosen either and "Key concepts covered in this test" becomes the start of
+  the key page.
 - **A missing key page is a choice; a broken one is a mistake.** A test that
   ends with its last question is read, shuffled and written as student copies
   only (`exam.hasKey === false`) -- plenty of teachers know their own answers.
