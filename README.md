@@ -62,6 +62,11 @@ variants*.
 `professor_2.docx`, and so on. Hand out the `student_` ones — they carry no
 answers; the matching `professor_` copy has the key.
 
+**No answer key in your test?** That is fine. A test that ends with its last
+question is read like any other — you simply get the student copies, one per
+variant, and the page says so before you press the button. (There is a sample
+of that shape to look at, too.)
+
 **Your test never leaves your computer.** There is no upload and no server:
 the page is a static file, and the documents are read, shuffled and written
 inside your browser tab. There are no cookies, no analytics and no stored
@@ -116,9 +121,18 @@ to open that file in Word:
 - Each option is its own paragraph starting with a marker: `(A)`, `A)`, `A.`,
   `a)`, `[A]`, `α)`, `(iii)` — any single letter in any script (Latin, Greek,
   Cyrillic, either case) or a short roman numeral.
-- A last page headed **Answer Key**, one entry per paragraph: `1.  A`, `1)  α`,
-  `1.  (c)`. The entries may be in any order; they are matched by question
-  number. Key and options need not agree on case (`Α` finds `α`).
+- **Optionally**, a last page headed **Answer Key** (or `Απαντήσεις`, `Λύσεις`,
+  `Κλείδα`), one entry per paragraph: `1.  A`, `1)  α`, `1.  (c)`. The entries
+  may be in any order; they are matched by question number. Key and options
+  need not agree on case (`Α` finds `α`).
+
+A test with **no key page at all** is accepted, and produces student copies
+only: no professor copy is written, because the professor copy exists to carry
+the key and a second identical paper with a banner on it is just something else
+to hand out by mistake. What is *not* accepted is a key that is announced and
+then incomplete — a document headed "Answer Key" that misses an entry, or
+names an option that does not exist, is still refused. There the teacher
+believes there is a key, and a half-right one is worse than none.
 
 Markers are stored exactly as written and compared case-insensitively — see
 `sameMarker()`. Uppercasing them would turn an `α)` paper into an `Α)` one on
@@ -206,8 +220,8 @@ your_test.docx (read in the tab, never uploaded)
 | `src/render.ts` | rebuilding `word/document.xml`, writing the packages |
 | `src/testmess.ts` | the whole pipeline in one call, plus the public exports |
 | `src/main.ts` | the page: file in, ZIP out |
-| `tests/` | 214 tests, `vitest` |
-| `samples/*.docx` | the two sample tests, Latin- and Greek-lettered; also the page's static directory, so they are served for download under their own names |
+| `tests/` | 228 tests, `vitest` |
+| `samples/*.docx` | three sample tests — Latin-lettered, Greek-lettered, and Greek with no answer key; also the page's static directory, so they are served for download under their own names |
 
 ### 1. `parseExam(bytes, name) -> Exam`
 
@@ -221,6 +235,7 @@ the on-screen key and label matching.
   source: 'calculus_practice_test_2.docx',
   title: 'Calculus Practice Test',
   preamble: [Element, ...],              // everything above question 1
+  hasKey: true,                          // false: student copies only
   keyTemplates: { pageBreak, heading, entry },  // reused so the professor copy
                                                 // keeps the original formatting
   questions: [
@@ -256,7 +271,8 @@ and cloned only at render time, so building a variant cannot corrupt the source.
       options: [{ letter: 'A',        // marker in this variant
                   sourceLetter: 'C',  // marker in the original
                   text: ..., nodes: [...] }, ...],
-      answer: 'B' },       // marker of the correct option, in this variant
+      answer: 'B' },       // marker of the correct option in this variant,
+                           // or null where the source had no key
     ...
   ],
 }
@@ -283,7 +299,8 @@ leaves the decision with the teacher.
 
 ### 3. `writeVariant(exam, variant) -> Paper[]`
 
-Called once per variant, and writes both copies.
+Called once per variant. It writes the student copy, and the professor copy as
+well where the source had an answer key.
 
 `renderDocumentXml()` re-parses the source document, empties the body, and
 refills it: the source's own front matter, then each question's paragraphs in
@@ -332,7 +349,7 @@ and test tooling only, and none of them reaches the published page — about
 ```bash
 npm install
 npm run dev        # the page, on a local server, reloading as you edit
-npm test           # 214 tests
+npm test           # 228 tests
 npm run typecheck  # tsc --noEmit
 npm run build      # the static site, into dist/
 ```

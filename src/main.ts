@@ -24,6 +24,7 @@ import { DEFAULT_LANG, LANGS, detectLanguage, t, type Lang, type Params } from '
 const SAMPLES: Record<string, string> = {
   latin: 'calculus_practice_test_2.docx',
   greek: 'calculus_practice_test_3.docx',
+  nokey: 'calculus_practice_test_3_no_key.docx',
 };
 
 const fileInput = document.querySelector<HTMLInputElement>('#file')!;
@@ -51,6 +52,7 @@ interface Run {
   papers: Paper[];
   variants: Variant[];
   seed: number;
+  hasKey: boolean;
 }
 
 interface Message {
@@ -175,6 +177,12 @@ async function useDocument(name: string, bytes: Uint8Array): Promise<void> {
       markers: exam.questions[0].options.map((option) => option.letter).join(' '),
       name,
     }, 'ok');
+    // A test with no answer key page is an ordinary test -- said plainly,
+    // where the file was chosen, so nobody waits for professor copies that
+    // are never coming.
+    if (!exam.hasKey) {
+      say(warning, 'status.nokey', {}, 'info');
+    }
     // Comments and tracked changes cannot be scrubbed without rewriting the
     // document, so the teacher is told rather than surprised.
     const carried = carriedOverWarnings(exam.parts);
@@ -241,10 +249,10 @@ function renderRun(): void {
       .map((paper) => paper.name)
       .join(', ');
     const cell = row.insertCell();
-    cell.className = 'key';
-    cell.textContent = variant.questions
-      .map((question) => `${question.number}${question.answer}`)
-      .join(', ');
+    cell.className = run.hasKey ? 'key' : 'key muted';
+    cell.textContent = run.hasKey
+      ? variant.questions.map((question) => `${question.number}${question.answer}`).join(', ')
+      : t(lang, 'results.nokey');
   }
 
   const note = document.createElement('p');
@@ -266,6 +274,7 @@ async function build(): Promise<void> {
   generateButton.disabled = true;
   say(status, 'status.building');
   try {
+    const hasKey = source.exam.hasKey;
     const { papers, variants, seed } = await generatePapers(source.bytes, source.name, {
       count: Number(countInput.value),
       seed: chosenSeed(),
@@ -276,10 +285,11 @@ async function build(): Promise<void> {
     const base = source.name.replace(/\.docx$/i, '');
     const blob = new Blob([archive as BlobPart], { type: 'application/zip' });
     download = { url: URL.createObjectURL(blob), name: `${base}-variants.zip` };
-    run = { papers, variants, seed };
+    run = { papers, variants, seed, hasKey };
     downloadButton.hidden = false;
     renderRun();
-    say(status, 'status.ready', { variants: variants.length, papers: papers.length }, 'ok');
+    say(status, hasKey ? 'status.ready' : 'status.ready.nokey',
+      { variants: variants.length, papers: papers.length }, 'ok');
   } catch (error) {
     complain(status, error);
   } finally {

@@ -33,9 +33,19 @@ export interface Paper {
   bytes: Uint8Array;
 }
 
-/** The two file names a variant is written under. */
-export function variantNames(index: number): [string, string] {
-  return [`student_${index}.docx`, `professor_${index}.docx`];
+/**
+ * The file names a variant is written under.
+ *
+ * A test that came with no answer key has no professor copy to write: the
+ * professor copy exists to carry the key, and a second identical paper with a
+ * banner on it would only be something else to hand out by mistake.
+ */
+export function variantNames(index: number, hasKey = true): string[] {
+  const names = [`student_${index}.docx`];
+  if (hasKey) {
+    names.push(`professor_${index}.docx`);
+  }
+  return names;
 }
 
 // --------------------------------------------------------------------------
@@ -137,7 +147,9 @@ function keyParagraphs(
         { bold: true, size: '28', after: '160' }),
   ];
   for (const question of variant.questions) {
-    paragraphs.push(keyEntryParagraph(doc, exam, question.number, question.answer));
+    // Only reached with a key: writeVariant() writes no professor copy
+    // without one.
+    paragraphs.push(keyEntryParagraph(doc, exam, question.number, question.answer ?? ''));
   }
   return paragraphs;
 }
@@ -206,18 +218,22 @@ export async function writeDocx(exam: Exam, documentXml: string): Promise<Uint8A
   return writeZip(parts);
 }
 
-/** Write one variant twice: the student paper, and the professor's copy. */
+/**
+ * Write one variant: the student paper, and -- where the source has an answer
+ * key -- the professor's copy as well.
+ */
 export async function writeVariant(
   exam: Exam, variant: Variant, lang: Lang = DEFAULT_LANG,
 ): Promise<Paper[]> {
-  const [studentName, professorName] = variantNames(variant.index);
+  const wanted = exam.hasKey
+    ? [['student', false], ['professor', true]] as const
+    : [['student', false]] as const;
+  const names = variantNames(variant.index, exam.hasKey);
+
   const papers: Paper[] = [];
-  for (const [name, kind, includeKey] of [
-    [studentName, 'student', false],
-    [professorName, 'professor', true],
-  ] as const) {
+  for (const [index, [kind, includeKey]] of wanted.entries()) {
     papers.push({
-      name,
+      name: names[index],
       kind,
       variant: variant.index,
       bytes: await writeDocx(exam, renderDocumentXml(exam, variant, includeKey, lang)),

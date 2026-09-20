@@ -11,7 +11,9 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { parseExam } from '../src/testmess';
-import { FIXTURES, sampleBytes } from './helpers';
+import { FIXTURES, NOKEY, sampleBytes } from './helpers';
+
+const OFFERED = [...FIXTURES.map((fixture) => fixture.file), NOKEY];
 
 const read = (name: string) => readFileSync(join(process.cwd(), name), 'utf-8');
 
@@ -20,13 +22,13 @@ const main = read('src/main.ts');
 const config = read('vite.config.ts');
 
 describe('the sample downloads', () => {
-  it.each(FIXTURES.map((fixture) => fixture.file))('offers %s for download', (file) => {
+  it.each(OFFERED)('offers %s for download', (file) => {
     const link = new RegExp(
       `<a class="link" href="\\./${file.replace('.', '\\.')}"[\\s\\S]{0,80}download="${file.replace('.', '\\.')}"`);
     expect(html).toMatch(link);
   });
 
-  it.each(FIXTURES.map((fixture) => fixture.file))('%s is actually there', (file) => {
+  it.each(OFFERED)('%s is actually there', (file) => {
     expect(existsSync(join(process.cwd(), 'samples', file))).toBe(true);
   });
 
@@ -41,7 +43,14 @@ describe('the sample downloads', () => {
   it('loads them from the same names the download links use', () => {
     expect(main).toMatch(/latin: 'calculus_practice_test_2\.docx'/);
     expect(main).toMatch(/greek: 'calculus_practice_test_3\.docx'/);
+    expect(main).toMatch(/nokey: 'calculus_practice_test_3_no_key\.docx'/);
     expect(main).toMatch(/fetch\(`\.\/\$\{name\}`\)/);
+  });
+
+  it('offers one without an answer key, and says so', () => {
+    const block = /<div class="samples">[\s\S]*?<\/ul>/.exec(html)![0].replace(/\s+/g, ' ');
+    expect(block).toMatch(/no answer key/i);
+    expect(block).toContain('data-sample="nokey"');
   });
 
   it('says what the downloads are for', () => {

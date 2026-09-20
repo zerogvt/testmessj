@@ -97,12 +97,14 @@ const EN: Record<string, string> = {
     + 'you have a document this program can read.',
   'samples.latin': 'Latin markers',
   'samples.greek': 'Greek markers',
+  'samples.nokey': 'Greek markers, no answer key',
   'samples.load': 'Load it',
   'samples.download': 'Download the .docx',
   'samples.note':
-    'Both samples are the same ten questions, marked in two different alphabets '
-    + '— the markers in your own test are used as they are, so a Greek-lettered '
-    + 'paper stays Greek-lettered.',
+    'All three are the same ten questions. Two are marked in different '
+    + 'alphabets — the markers in your own test are used as they are, so a '
+    + 'Greek-lettered paper stays Greek-lettered. The third has no answer key '
+    + 'page at all, and makes student copies only.',
 
   // -- step 2 ------------------------------------------------------------
   'step2.title': 'Settings',
@@ -136,6 +138,12 @@ const EN: Record<string, string> = {
   'status.ready':
     '{variants} variants ready: {papers} documents. Hand out the student '
     + 'copies; the professor copies carry the key.',
+  'status.ready.nokey':
+    '{variants} variants ready: {papers} student copies. There are no professor '
+    + 'copies, because this test came without an answer key.',
+  'status.nokey':
+    'This test has no answer key page, so only student copies will be made — '
+    + 'one per variant, and no key to hand out by mistake.',
   'status.warning':
     'Careful: this document contains {what}, which are part of the file and '
     + 'will be carried into the papers. Remove them in Word (Review tab) first '
@@ -146,6 +154,7 @@ const EN: Record<string, string> = {
   'results.variant': 'Variant',
   'results.files': 'Files',
   'results.key': 'Answer key',
+  'results.nokey': 'none in the source',
   'results.seed': 'Seed {seed} — type it into the seed box to rebuild exactly these papers.',
   'download.button': 'Download {name} ({papers} papers)',
 
@@ -281,12 +290,15 @@ const EL: Record<string, string> = {
     + 'έχετε ένα έγγραφο που το πρόγραμμα μπορεί να διαβάσει.',
   'samples.latin': 'Λατινικοί δείκτες',
   'samples.greek': 'Ελληνικοί δείκτες',
+  'samples.nokey': 'Ελληνικοί δείκτες, χωρίς απαντήσεις',
   'samples.load': 'Φόρτωσέ το',
   'samples.download': 'Κατεβάστε το .docx',
   'samples.note':
-    'Και τα δύο δείγματα έχουν τις ίδιες δέκα ερωτήσεις, σημειωμένες σε δύο '
-    + 'διαφορετικά αλφάβητα — οι δείκτες του δικού σας διαγωνίσματος '
-    + 'χρησιμοποιούνται όπως είναι, οπότε ένα ελληνικό φυλλάδιο μένει ελληνικό.',
+    'Και τα τρία δείγματα έχουν τις ίδιες δέκα ερωτήσεις. Τα δύο είναι '
+    + 'σημειωμένα σε διαφορετικά αλφάβητα — οι δείκτες του δικού σας '
+    + 'διαγωνίσματος χρησιμοποιούνται όπως είναι, οπότε ένα ελληνικό φυλλάδιο '
+    + 'μένει ελληνικό. Το τρίτο δεν έχει καθόλου σελίδα απαντήσεων και παράγει '
+    + 'μόνο αντίτυπα μαθητή.',
 
   // -- step 2 ------------------------------------------------------------
   'step2.title': 'Ρυθμίσεις',
@@ -320,6 +332,13 @@ const EL: Record<string, string> = {
   'status.ready':
     '{variants} παραλλαγές έτοιμες: {papers} έγγραφα. Μοιράστε τα αντίτυπα '
     + 'μαθητή· τα αντίτυπα καθηγητή έχουν τις απαντήσεις.',
+  'status.ready.nokey':
+    '{variants} παραλλαγές έτοιμες: {papers} αντίτυπα μαθητή. Δεν υπάρχουν '
+    + 'αντίτυπα καθηγητή, επειδή το διαγώνισμα δεν είχε φύλλο απαντήσεων.',
+  'status.nokey':
+    'Το διαγώνισμα δεν έχει σελίδα απαντήσεων, οπότε θα παραχθούν μόνο αντίτυπα '
+    + 'μαθητή — ένα ανά παραλλαγή, και καμία απάντηση για να μοιραστεί κατά '
+    + 'λάθος.',
   'status.warning':
     'Προσοχή: το έγγραφο περιέχει {what}, που είναι μέρος του αρχείου και θα '
     + 'μεταφερθούν στα φυλλάδια. Αν δεν πρέπει να τα δει η τάξη, αφαιρέστε τα '
@@ -330,6 +349,7 @@ const EL: Record<string, string> = {
   'results.variant': 'Παραλλαγή',
   'results.files': 'Αρχεία',
   'results.key': 'Απαντήσεις',
+  'results.nokey': 'δεν υπάρχουν στο έγγραφο',
   'results.seed':
     'Σπόρος {seed} — γράψτε τον στο πεδίο «Σπόρος» για να ξαναφτιάξετε ακριβώς '
     + 'αυτά τα φυλλάδια.',

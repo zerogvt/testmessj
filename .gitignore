@@ -13,4 +13,8 @@ professor_*.docx
 # Word lock files, left behind while a document is open
 ~$*.docx
 
+# NTFS alternate data streams, which WSL shows as files beside the real one
+*:Zone.Identifier
+*:sec.endpointdlp
+
 .DS_Store

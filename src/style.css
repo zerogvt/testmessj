@@ -411,6 +411,12 @@ td.key {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+td.key.muted {
+  color: var(--muted);
+  font-family: inherit;
+  font-style: italic;
+}
+
 footer {
   margin-top: 2.4rem;
   color: var(--muted);

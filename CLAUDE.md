@@ -34,6 +34,12 @@ change, not in the test.
   with `sameMarker()`, which case-folds.
 - **The key follows the shuffle by content**, not by marker: after shuffling it
   must point at the same answer text it pointed at in the source.
+- **A missing key page is a choice; a broken one is a mistake.** A test that
+  ends with its last question is read, shuffled and written as student copies
+  only (`exam.hasKey === false`) -- plenty of teachers know their own answers.
+  A document that *announces* a key and then misses an entry, or names an
+  option that does not exist, is still refused. Do not let the first case
+  soften the second.
 - **Refuse rather than guess.** A missing key entry, duplicate markers, a key
   naming an option that does not exist: throw `ExamError`, do not improvise.
   Half-correct exam papers are worse than no papers. The page shows that message

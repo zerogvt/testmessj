@@ -44,6 +44,16 @@ export interface KeyTemplates {
 export interface Exam {
   source: string;
   title: string;
+  /**
+   * Whether the source has an answer key page at all.
+   *
+   * A test that ends with its last question is a perfectly ordinary test --
+   * plenty of teachers know their own answers -- so it is accepted, and only
+   * student papers are written from it.  This is not the same as a key that is
+   * *incomplete*: a document that announces a key and then misses an entry is
+   * still refused, because there the teacher believes there is a key.
+   */
+  hasKey: boolean;
   /** Everything above question 1, copied to every variant as-is. */
   preamble: Element[];
   keyTemplates: KeyTemplates;
@@ -82,6 +92,7 @@ export async function parseExam(bytes: Uint8Array, source = 'test.docx'): Promis
   const questions: ExamQuestion[] = [];
   const keyTemplates: KeyTemplates = { pageBreak: null, heading: null, entry: null };
   const answers = new Map<number, string>();
+  let sawKeyPage = false;
   let section: 'preamble' | 'questions' | 'key' = 'preamble';
   let current: ExamQuestion | null = null;
   let previous: Element | null = null;
@@ -94,6 +105,7 @@ export async function parseExam(bytes: Uint8Array, source = 'test.docx'): Promis
 
     if (KEY_HEADING.test(text)) {
       section = 'key';
+      sawKeyPage = true;
       keyTemplates.heading = child;
       if (previous !== null && hasPageBreak(previous)) {
         keyTemplates.pageBreak = previous;
@@ -160,6 +172,7 @@ export async function parseExam(bytes: Uint8Array, source = 'test.docx'): Promis
   const exam: Exam = {
     source,
     title: preamble.length ? paragraphText(preamble[0]).trim() : '',
+    hasKey: sawKeyPage || answers.size > 0,
     preamble,
     keyTemplates,
     questions,
@@ -185,6 +198,11 @@ export function validateExam(exam: Exam): void {
     const folded = markers.map(foldMarker);
     if (new Set(folded).size !== folded.length) {
       throw new ExamError('duplicate-markers', { number, markers: markers.join(', ') });
+    }
+    if (!exam.hasKey) {
+      // No key page: there is nothing to check the questions against, and
+      // nothing to get wrong.  Only student papers come out of this.
+      continue;
     }
     if (question.answer === null) {
       throw new ExamError('no-key-entry', { number });

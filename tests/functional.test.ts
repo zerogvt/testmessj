@@ -132,7 +132,7 @@ describe.each(FIXTURES)('$name sample', (fixture) => {
         const expected = source.options.find(
           (option) => sameMarker(option.letter, source.answer!))!.text;
         const actual = question.options.find(
-          (option) => sameMarker(option.letter, question.answer))!.text;
+          (option) => sameMarker(option.letter, question.answer!))!.text;
         expect(actual, `variant ${variant.index} question ${question.number}`)
           .toBe(expected);
       }

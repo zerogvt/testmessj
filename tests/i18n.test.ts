@@ -192,6 +192,20 @@ describe('detectLanguage', () => {
   });
 });
 
+describe('a test with no answer key', () => {
+  it('has its own sentences, in both languages', () => {
+    // Reusing "the professor copies carry the key" for a run that produced no
+    // professor copies would be a small lie told at the worst moment.
+    for (const key of ['status.nokey', 'status.ready.nokey', 'results.nokey',
+      'samples.nokey']) {
+      expect(STRINGS.en[key], key).toBeTruthy();
+      expect(STRINGS.el[key], key).toBeTruthy();
+    }
+    expect(STRINGS.en['status.ready.nokey']).toMatch(/student copies/);
+    expect(STRINGS.el['status.ready.nokey']).toMatch(/αντίτυπα μαθητή/);
+  });
+});
+
 describe('the one line this program writes into a paper', () => {
   it('is in the language the papers were built in', async () => {
     const { generatePapers: generate } = await import('../src/testmess');

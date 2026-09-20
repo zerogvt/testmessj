@@ -38,6 +38,12 @@ export const FIXTURES = [
 
 export const SOURCE = FIXTURES[0].file;
 
+/**
+ * The same Greek test with its key page removed entirely -- a document a
+ * teacher who knows their own answers would hand over.
+ */
+export const NOKEY = 'calculus_practice_test_3_no_key.docx';
+
 /** word/document.xml out of a .docx, parsed. */
 export async function documentRoot(bytes: Uint8Array): Promise<Document> {
   const parts = await readZip(bytes);

@@ -25,8 +25,11 @@ export interface VariantQuestion {
   stemText: string;
   stemNodes: Element[];
   options: VariantOption[];
-  /** Marker of the correct option, in this variant. */
-  answer: string;
+  /**
+   * Marker of the correct option in this variant, or null where the source
+   * has no answer key at all.
+   */
+  answer: string | null;
 }
 
 export interface Variant {
@@ -119,9 +122,10 @@ export function makeVariant(exam: Exam, index: number, rng: Rng): Variant {
       };
     });
 
-    if (answer === null) {
-      // validateExam() rules this out; reaching it would mean handing over a
-      // paper whose key points at nothing, which is worse than no paper.
+    if (answer === null && source.answer !== null) {
+      // The source had an answer and the shuffle lost it.  validateExam()
+      // rules this out; reaching it would mean handing over a paper whose key
+      // points at nothing, which is worse than no paper.
       throw new AppError('lost-answer', { number: source.number });
     }
 
@@ -147,8 +151,16 @@ export function makeVariants(exam: Exam, count: number, seed: number): Variant[]
   return variants;
 }
 
-/** "1C, 2A, 3D, ..." -- the line a teacher checks a paper against. */
+/**
+ * "1C, 2A, 3D, ..." -- the line a teacher checks a paper against.
+ *
+ * Empty for a test that came without a key: there is nothing to print, and an
+ * invented line would be worse than none.
+ */
 export function keyLine(variant: Variant): string {
+  if (variant.questions.some((question) => question.answer === null)) {
+    return '';
+  }
   return variant.questions
     .map((question) => `${question.number}${question.answer}`)
     .join(', ');
