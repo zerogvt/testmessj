@@ -12,6 +12,8 @@
 // are in every browser -- so the namespace prefixes the source document uses
 // (w:, m:, w14:, mc: ...) come back out spelled the way they went in.
 
+import { AppError } from './errors';
+
 export const NS = {
   w: 'http://schemas.openxmlformats.org/wordprocessingml/2006/main',
   m: 'http://schemas.openxmlformats.org/officeDocument/2006/math',
@@ -24,7 +26,7 @@ export function parseXml(text: string): Document {
   const doc = new DOMParser().parseFromString(text, 'application/xml');
   const failure = doc.getElementsByTagName('parsererror')[0];
   if (failure) {
-    throw new Error(`not well-formed XML: ${failure.textContent?.trim()}`);
+    throw new AppError('not-well-formed', { detail: failure.textContent?.trim() ?? '' });
   }
   return doc;
 }
@@ -46,7 +48,7 @@ export function childElements(parent: Element): Element[] {
 export function documentBody(doc: Document): Element {
   const body = doc.documentElement.getElementsByTagNameNS(NS.w, 'body')[0];
   if (!body) {
-    throw new Error('word/document.xml has no <w:body>');
+    throw new AppError('no-body');
   }
   return body;
 }

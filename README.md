@@ -39,6 +39,10 @@ that has to be acknowledged on every visit.
 
 **1. Open the page:** <https://zerogvt.github.io/testmessj/>
 
+The page speaks English and Greek. It opens in whichever your browser asks for
+and the two flags at the top switch between them; `?lang=el` on the end of the
+address opens it in Greek, which is the link to send a colleague.
+
 **2. Choose your test** — drag the `.docx` onto the page, or click *Choose a
 .docx file*. The page reads it straight away and tells you how many questions
 it found; if it cannot make sense of the document it says so there and then,
@@ -128,6 +132,37 @@ duplicate option markers, a missing key entry, or a key pointing at a marker
 that does not exist all throw `ExamError` (see `validateExam`), and the page
 prints the message where you chose the file.
 
+## Two languages
+
+Every string a person reads lives in `src/i18n.ts`, in both languages —
+including the warning, the whole legal notice, and the errors the parser
+raises, because "no answer key entry for question 3" is exactly the moment
+somebody needs to understand what went wrong. Errors carry a code and its
+parameters rather than a finished sentence, and the page renders the code.
+
+The English is also written inline in `index.html`, so the page reads before
+any script runs; a test holds the two copies identical, checks that the tables
+know the same keys, that no Greek string was left in English, and that the same
+`{placeholders}` appear in both.
+
+Switching language re-renders what is already on screen, so a run does not have
+to be rebuilt to be read in the other language. **Nothing is stored** — the
+choice rides in the URL, not in the browser.
+
+Two things follow from the page speaking Greek:
+
+- **A Greek key page is recognised.** The heading that opens the answers may
+  read `Answer Key`, `Απαντήσεις`, `Λύσεις` or `Κλείδα`, in any case and with or
+  without accents (uppercase Greek drops them, and a heading is usually in
+  capitals).
+- **The one line this program writes into a paper follows the language**: the
+  professor copy's "Variant N" banner. Everything else in the document is the
+  teacher's own, so a student copy is byte-for-byte identical whichever flag is
+  showing — there is a test for that.
+
+The flags are a liberty: a flag is a country, not a language, so each button
+also carries the language's own name beside it.
+
 ## Browser requirements
 
 A browser from 2023 or later: the ZIP work goes through
@@ -164,12 +199,14 @@ your_test.docx (read in the tab, never uploaded)
 | `src/xml.ts` | paragraph markup: text, labels, relabelling |
 | `src/zip.ts` | the archive layer — read a `.docx`, write one back |
 | `src/parse.ts` | `parseExam()` and `validateExam()` |
+| `src/i18n.ts` | every string a person reads, in both languages |
+| `src/errors.ts` | errors that carry a code, so they can be translated |
 | `src/metadata.ts` | taking the names out of a package, and warning about what stays |
 | `src/variants.ts` | the shuffle, and the seeded generator behind it |
 | `src/render.ts` | rebuilding `word/document.xml`, writing the packages |
 | `src/testmess.ts` | the whole pipeline in one call, plus the public exports |
 | `src/main.ts` | the page: file in, ZIP out |
-| `tests/` | 171 tests, `vitest` |
+| `tests/` | 214 tests, `vitest` |
 | `samples/*.docx` | the two sample tests, Latin- and Greek-lettered; also the page's static directory, so they are served for download under their own names |
 
 ### 1. `parseExam(bytes, name) -> Exam`
@@ -295,7 +332,7 @@ and test tooling only, and none of them reaches the published page — about
 ```bash
 npm install
 npm run dev        # the page, on a local server, reloading as you edit
-npm test           # 171 tests
+npm test           # 214 tests
 npm run typecheck  # tsc --noEmit
 npm run build      # the static site, into dist/
 ```

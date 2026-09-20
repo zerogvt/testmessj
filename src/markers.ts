@@ -20,7 +20,13 @@ export const OPTION_LABEL = new RegExp(
   String.raw`^\s*[(\[]?\s*(${MARKER})\s*[.)\]]`, 'du');
 export const KEY_ENTRY = new RegExp(
   String.raw`^\s*(\d+)\s*[.)]\s*[(\[]?\s*(${MARKER})\s*[)\]]?\s*$`, 'du');
-export const KEY_HEADING = /^\s*answer\s*key\b/i;
+// The heading that opens the key page, in either language the page speaks.
+// Greek needs the accents written as alternatives: uppercase Greek drops them
+// ("ΑΠΑΝΤΗΣΕΙΣ"), so /απαντήσεις/i alone would miss a heading in capitals --
+// which is how a heading is usually written.  \b is no use after a Greek
+// letter either (\w is ASCII), hence the explicit "not a letter" look-ahead.
+export const KEY_HEADING =
+  /^\s*(answer\s*key\b|(?:απαντ[ήη]σεις|λ[ύυ]σεις|κλε[ίι]δα)(?![\p{L}]))/iu;
 
 /** Case-fold a marker for comparison: "A" ~ "a", "Α" ~ "α", "Σ" ~ "ς". */
 export function foldMarker(marker: string): string {

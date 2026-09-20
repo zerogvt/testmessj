@@ -63,6 +63,19 @@ describe('key entries', () => {
     expect(KEY_HEADING.test('Answer sheet')).toBe(false);
     expect(KEY_HEADING.test('Questions')).toBe(false);
   });
+
+  it.each(['Απαντήσεις', 'ΑΠΑΝΤΗΣΕΙΣ', 'απαντήσεις', 'Απαντήσεις:', 'Λύσεις',
+    'ΛΥΣΕΙΣ', 'Κλείδα απαντήσεων', '  Απαντήσεις'])(
+    'finds a Greek key heading: %s', (text) => {
+      // Uppercase Greek drops its accents, and a heading is usually written in
+      // capitals, so both spellings have to be recognised.
+      expect(KEY_HEADING.test(text)).toBe(true);
+    });
+
+  it.each(['Απαντήστε στην ερώτηση', '1. Απαντήστε σύντομα', 'Ερωτήσεις',
+    'Απαντητικό φύλλο'])('does not read %s as a key heading', (text) => {
+    expect(KEY_HEADING.test(text)).toBe(false);
+  });
 });
 
 describe('sameMarker', () => {

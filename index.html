@@ -1,5 +1,12 @@
 <!doctype html>
 <!-- feature: exam-variants -->
+<!--
+  Every translatable text node carries data-i18n="<key>" and holds the English
+  string inline.  That way the page reads correctly before any script runs --
+  which is what keeps the warning below on the page if the bundle never loads
+  -- and switching language replaces those nodes from src/i18n.ts.  A test
+  holds the inline English and the table's English identical.
+-->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -35,45 +42,49 @@
       acknowledgement on top of it, not a replacement for it.
     -->
     <aside class="banner" role="note">
-      <strong>Check every paper before you use it.</strong>
-      This tool is free software, provided with no warranty of any kind. It can
-      get a shuffle, an answer key or a document wrong — you are responsible for
-      checking what it produces.
-      <button type="button" class="link" id="show-notice">Read the full notice</button>
+      <strong data-i18n="banner.lead">Check every paper before you use it.</strong>
+      <span data-i18n="banner.rest">This tool is free software, provided with no
+        warranty of any kind. It can get a shuffle, an answer key or a document
+        wrong — you are responsible for checking what it produces.</span>
+      <button type="button" class="link" id="show-notice"
+              data-i18n="banner.full">Read the full notice</button>
     </aside>
 
     <dialog id="notice" class="notice" role="alertdialog" aria-labelledby="notice-title">
-      <h2 id="notice-title">Before you use this tool</h2>
+      <h2 id="notice-title" data-i18n="notice.title">Before you use this tool</h2>
       <p>
-        <strong>testmess is provided free of charge, “as is” and “as
-        available”, without warranty of any kind</strong>, express or implied,
-        including without limitation any implied warranty of merchantability,
-        fitness for a particular purpose, accuracy, or non-infringement.
+        <strong data-i18n="notice.warranty">testmess is provided free of charge,
+          “as is” and “as available”, without warranty of any kind.</strong>
+        <span data-i18n="notice.warranty.detail">That includes, without
+          limitation, any express or implied warranty of merchantability,
+          fitness for a particular purpose, accuracy, or
+          non-infringement.</span>
       </p>
       <p>
-        It is software, and software gets things wrong. It may misread a
-        question or an answer key, shuffle an option wrongly, point a key at
-        the wrong answer, drop or alter part of your document, or produce a
-        file that Word cannot open — <strong>including in ways that are not
-        obvious at a glance</strong>.
+        <span data-i18n="notice.errors">It is software, and software gets things
+          wrong. It may misread a question or an answer key, shuffle an option
+          wrongly, point a key at the wrong answer, drop or alter part of your
+          document, or produce a file that Word cannot open.</span>
+        <strong data-i18n="notice.errors.emph">Such failures are not always
+          obvious at a glance.</strong>
       </p>
       <p>
-        <strong>You must check every document it produces</strong> — every
-        student copy and every answer key — before you print, distribute, sit
-        or grade an examination with it. Do not rely on it unchecked.
+        <strong data-i18n="notice.check">You must check every document it
+          produces — every student copy and every answer key — before you print,
+          distribute, sit or grade an examination with it.</strong>
+        <span data-i18n="notice.check.detail">Do not rely on it unchecked.</span>
       </p>
-      <p>
+      <p data-i18n="notice.liability">
         To the fullest extent permitted by applicable law, the authors and
-        contributors accept <strong>no liability</strong> for any loss or
-        damage of any kind arising out of or in connection with this tool or
-        anything it produces, including without limitation misprinted or
-        misgraded examinations, incorrect marks or results, wasted time, lost
-        or corrupted documents, or any direct, indirect, incidental, special,
-        consequential or exemplary damages, whether in contract, tort
-        (including negligence) or otherwise, and whether or not the
-        possibility of such damage was known.
+        contributors accept no liability for any loss or damage of any kind
+        arising out of or in connection with this tool or anything it produces,
+        including without limitation misprinted or misgraded examinations,
+        incorrect marks or results, wasted time, lost or corrupted documents, or
+        any direct, indirect, incidental, special, consequential or exemplary
+        damages, whether in contract, tort (including negligence) or otherwise,
+        and whether or not the possibility of such damage was known.
       </p>
-      <p>
+      <p data-i18n="notice.responsibility">
         You are responsible for the documents you process with it and for
         following the rules of your school, university or employer. Nothing in
         this notice excludes or limits any liability that cannot lawfully be
@@ -81,63 +92,127 @@
         this notice is held unenforceable, the rest continues to apply.
       </p>
       <p>
-        By continuing you accept this notice and the terms of the
-        <a href="https://github.com/zerogvt/testmessj/blob/main/LICENSE" rel="noreferrer">MIT licence</a>.
-        If you do not accept them, close this page.
+        <span data-i18n="notice.accept.text">By continuing you accept this notice
+          and the terms of the</span>
+        <a href="https://github.com/zerogvt/testmessj/blob/main/LICENSE"
+           rel="noreferrer" data-i18n="notice.accept.licence">MIT licence</a>.
+        <span data-i18n="notice.accept.refuse">If you do not accept them, close
+          this page.</span>
+      </p>
+      <p class="hint" data-i18n="notice.prevail">
+        This notice is also published in Greek; if the two differ, the English
+        text prevails.
       </p>
       <form method="dialog">
-        <button id="accept-notice" type="submit" class="primary" autofocus>I understand — continue</button>
+        <button id="accept-notice" type="submit" class="primary" autofocus
+                data-i18n="notice.accept">I understand — continue</button>
       </form>
     </dialog>
     <main>
+      <!--
+        Flags stand for countries rather than languages, so each button also
+        carries the language's own name, written in that language.
+      -->
+      <div class="langs" role="group" aria-label="Language / Γλώσσα">
+        <button type="button" class="lang" data-lang="en" lang="en" aria-pressed="true">
+          <svg class="flag" viewBox="0 0 24 16" aria-hidden="true" focusable="false">
+            <rect width="24" height="16" fill="#ffffff" />
+            <g fill="#b22234">
+              <rect width="24" height="1.23" y="0" />
+              <rect width="24" height="1.23" y="2.46" />
+              <rect width="24" height="1.23" y="4.92" />
+              <rect width="24" height="1.23" y="7.38" />
+              <rect width="24" height="1.23" y="9.85" />
+              <rect width="24" height="1.23" y="12.31" />
+              <rect width="24" height="1.23" y="14.77" />
+            </g>
+            <rect width="9.6" height="8.62" fill="#3c3b6e" />
+            <g fill="#ffffff">
+              <circle cx="1.6" cy="1.7" r="0.5" /><circle cx="4" cy="1.7" r="0.5" />
+              <circle cx="6.4" cy="1.7" r="0.5" /><circle cx="8.4" cy="1.7" r="0.5" />
+              <circle cx="1.6" cy="4.3" r="0.5" /><circle cx="4" cy="4.3" r="0.5" />
+              <circle cx="6.4" cy="4.3" r="0.5" /><circle cx="8.4" cy="4.3" r="0.5" />
+              <circle cx="1.6" cy="6.9" r="0.5" /><circle cx="4" cy="6.9" r="0.5" />
+              <circle cx="6.4" cy="6.9" r="0.5" /><circle cx="8.4" cy="6.9" r="0.5" />
+            </g>
+          </svg>
+          <span>English</span>
+        </button>
+        <button type="button" class="lang" data-lang="el" lang="el" aria-pressed="false">
+          <svg class="flag" viewBox="0 0 27 18" aria-hidden="true" focusable="false">
+            <rect width="27" height="18" fill="#0d5eaf" />
+            <g fill="#ffffff">
+              <rect width="27" height="2" y="2" />
+              <rect width="27" height="2" y="6" />
+              <rect width="27" height="2" y="10" />
+              <rect width="27" height="2" y="14" />
+            </g>
+            <rect width="10" height="10" fill="#0d5eaf" />
+            <g fill="#ffffff">
+              <rect x="4" y="0" width="2" height="10" />
+              <rect x="0" y="4" width="10" height="2" />
+            </g>
+          </svg>
+          <span>Ελληνικά</span>
+        </button>
+      </div>
+
       <header>
         <h1>testmess</h1>
-        <p class="lede">
+        <p class="lede" data-i18n="app.tagline">
           One multiple-choice test in Word, any number of shuffled variants —
-          each written twice: a <strong>student copy</strong> (questions and
-          options) and a <strong>professor copy</strong> (the same paper, plus
-          the answer key on its own last page).
+          each written twice: a student copy (questions and options) and a
+          professor copy (the same paper, plus the answer key on its own last
+          page).
         </p>
-        <p class="privacy">
-          Your test never leaves this tab. There is no upload and no server:
-          the documents are read, shuffled and written here, on your computer.
+        <p class="privacy" data-i18n="app.privacy">
+          Your test never leaves this tab. There is no upload and no server: the
+          documents are read, shuffled and written here, on your computer.
         </p>
       </header>
 
       <section class="step" aria-labelledby="step-source">
-        <h2 id="step-source"><span class="number">1</span> Choose the test</h2>
+        <h2 id="step-source">
+          <span class="number">1</span>
+          <span data-i18n="step1.title">Choose the test</span>
+        </h2>
         <div id="drop" class="drop">
           <label class="file">
             <input id="file" type="file" accept=".docx" />
-            <span>Choose a .docx file</span>
+            <span data-i18n="step1.choose">Choose a .docx file</span>
           </label>
-          <p class="hint">or drag it here</p>
+          <p class="hint" data-i18n="step1.drag">or drag it here</p>
         </div>
 
         <div class="samples">
-          <p class="hint">
-            <strong>New to this?</strong> Start from a sample. <em>Load</em> one
-            to see what comes out; <em>download</em> one and open it in Word to
-            see exactly how a test has to be laid out — how questions are
-            numbered, how options are marked, and the <strong>Answer Key</strong>
-            page at the end. Save a copy, type your own questions over the top,
-            and you have a document this program can read.
+          <p class="hint" data-i18n="samples.intro">
+            New to this? Start from a sample. Load one to see what comes out;
+            download one and open it in Word to see exactly how a test has to be
+            laid out — how questions are numbered, how options are marked, and
+            the Answer Key page at the end. Save a copy, type your own questions
+            over the top, and you have a document this program can read.
           </p>
           <ul class="sample-list">
             <li>
-              <span>Latin markers <code>(A)</code>–<code>(D)</code></span>
-              <button type="button" class="link" data-sample="latin">Load it</button>
+              <span><span data-i18n="samples.latin">Latin markers</span>
+                <code>(A)</code>–<code>(D)</code></span>
+              <button type="button" class="link" data-sample="latin"
+                      data-i18n="samples.load">Load it</button>
               <a class="link" href="./calculus_practice_test_2.docx"
-                 download="calculus_practice_test_2.docx">Download the .docx</a>
+                 download="calculus_practice_test_2.docx"
+                 data-i18n="samples.download">Download the .docx</a>
             </li>
             <li>
-              <span>Greek markers <code>α)</code>–<code>δ)</code></span>
-              <button type="button" class="link" data-sample="greek">Load it</button>
+              <span><span data-i18n="samples.greek">Greek markers</span>
+                <code>α)</code>–<code>δ)</code></span>
+              <button type="button" class="link" data-sample="greek"
+                      data-i18n="samples.load">Load it</button>
               <a class="link" href="./calculus_practice_test_3.docx"
-                 download="calculus_practice_test_3.docx">Download the .docx</a>
+                 download="calculus_practice_test_3.docx"
+                 data-i18n="samples.download">Download the .docx</a>
             </li>
           </ul>
-          <p class="hint">
+          <p class="hint" data-i18n="samples.note">
             Both samples are the same ten questions, marked in two different
             alphabets — the markers in your own test are used as they are, so a
             Greek-lettered paper stays Greek-lettered.
@@ -148,29 +223,35 @@
       </section>
 
       <section class="step" aria-labelledby="step-settings">
-        <h2 id="step-settings"><span class="number">2</span> Settings</h2>
+        <h2 id="step-settings">
+          <span class="number">2</span>
+          <span data-i18n="step2.title">Settings</span>
+        </h2>
         <div class="settings">
           <label>
-            Variants
+            <span data-i18n="step2.variants">Variants</span>
             <input id="count" type="number" min="1" max="60" step="1" value="3" />
           </label>
           <label>
-            Seed <span class="optional">(optional)</span>
-            <input id="seed" type="text" inputmode="text" placeholder="leave empty for a new one" />
+            <span><span data-i18n="step2.seed">Seed</span>
+              <span class="optional" data-i18n="step2.optional">(optional)</span></span>
+            <input id="seed" type="text" inputmode="text"
+                   data-i18n-placeholder="step2.seedPlaceholder"
+                   placeholder="leave empty for a new one" />
           </label>
         </div>
         <label class="check">
           <input id="scrub" type="checkbox" checked />
           <span>
-            Remove author details from the papers
-            <span class="optional">
-              — Word stores the name of whoever wrote and last saved the
-              document inside the file itself, and a copy handed to a class
-              carries it. Untick to keep the source's metadata as it is.
+            <span data-i18n="step2.scrub">Remove author details from the papers</span>
+            <span class="optional" data-i18n="step2.scrub.detail">
+              — Word stores the name of whoever wrote and last saved the document
+              inside the file itself, and a copy handed to a class carries it.
+              Untick to keep the source's metadata as it is.
             </span>
           </span>
         </label>
-        <p class="hint">
+        <p class="hint" data-i18n="step2.seedHint">
           The same seed always produces exactly the same papers, which is what
           you want if you have to reprint one of them later. The seed used is
           shown with the results.
@@ -178,35 +259,44 @@
       </section>
 
       <section class="step" aria-labelledby="step-build">
-        <h2 id="step-build"><span class="number">3</span> Build the papers</h2>
+        <h2 id="step-build">
+          <span class="number">3</span>
+          <span data-i18n="step3.title">Build the papers</span>
+        </h2>
         <p class="caution">
-          Whatever comes out, <strong>read it before it reaches a student</strong>:
-          check a paper against its answer key, and check that the equations
-          look right in Word.
+          <strong data-i18n="step3.caution">Read what comes out before it reaches
+            a student.</strong>
+          <span data-i18n="step3.caution.detail">Check a paper against its answer
+            key, and check that the equations look right in Word.</span>
         </p>
         <div class="actions">
-          <button id="generate" type="button" class="primary" disabled>Generate variants</button>
-          <button id="download" type="button" hidden>Download papers.zip</button>
+          <button id="generate" type="button" class="primary" disabled
+                  data-i18n="step3.generate">Generate variants</button>
+          <button id="download" type="button" hidden
+                  data-i18n="step3.download">Download papers.zip</button>
         </div>
         <p id="status" class="status" role="status"></p>
         <div id="results" class="results"></div>
       </section>
 
       <footer>
-        <p>
+        <p data-i18n="footer.equations">
           Equations written with the Word equation editor survive untouched:
-          every stem and option is carried as the raw paragraph markup from
-          your document, and the only thing rewritten is the label in front of
-          it.
+          every stem and option is carried as the raw paragraph markup from your
+          document, and the only thing rewritten is the label in front of it.
         </p>
         <p>
-          Provided as is, without warranty of any kind; no liability is accepted
-          for its output or for anything arising from its use.
-          <button type="button" class="link" id="show-notice-footer">Full notice</button>
+          <span data-i18n="footer.disclaimer">Provided as is, without warranty of
+            any kind; no liability is accepted for its output or for anything
+            arising from its use.</span>
+          <button type="button" class="link" id="show-notice-footer"
+                  data-i18n="footer.full">Full notice</button>
         </p>
         <p>
-          <a href="https://github.com/zerogvt/testmessj" rel="noreferrer">Source code</a> ·
-          <a href="https://github.com/zerogvt/testmessj/blob/main/LICENSE" rel="noreferrer">MIT licence</a>
+          <a href="https://github.com/zerogvt/testmessj" rel="noreferrer"
+             data-i18n="footer.source">Source code</a> ·
+          <a href="https://github.com/zerogvt/testmessj/blob/main/LICENSE"
+             rel="noreferrer" data-i18n="footer.licence">MIT licence</a>
         </p>
       </footer>
     </main>

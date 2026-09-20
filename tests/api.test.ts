@@ -46,14 +46,14 @@ describe('generatePapers', () => {
 
   it('refuses a file it cannot read', async () => {
     await expect(generatePapers(new TextEncoder().encode('nope'), 'notes.txt'))
-      .rejects.toThrow(/could not read notes.txt/);
+      .rejects.toMatchObject({ code: 'not-an-archive' });
   });
 
   it('refuses fewer than one variant', async () => {
     await expect(generatePapers(sampleBytes(SOURCE), SOURCE, { count: 0 }))
-      .rejects.toThrow(/at least 1/);
+      .rejects.toMatchObject({ code: 'count-too-small' });
     await expect(generatePapers(sampleBytes(SOURCE), SOURCE, { count: 2.5 }))
-      .rejects.toThrow(/at least 1/);
+      .rejects.toMatchObject({ code: 'count-too-small' });
   });
 
   it('prints a key line a teacher can check a paper against', async () => {

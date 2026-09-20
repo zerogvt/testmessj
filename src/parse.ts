@@ -11,6 +11,7 @@
 import {
   foldMarker, KEY_ENTRY, KEY_HEADING, OPTION_LABEL, QUESTION_LABEL, sameMarker,
 } from './markers';
+import { AppError, ExamError } from './errors';
 import { readZip, type ZipEntry } from './zip';
 import {
   childElements, documentBody, hasPageBreak, isTag, paragraphText, parseXml,
@@ -53,18 +54,10 @@ export interface Exam {
   parts: ZipEntry[];
 }
 
-/** An input document this program refuses to guess about. */
-export class ExamError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ExamError';
-  }
-}
-
 export function documentPart(parts: ZipEntry[]): string {
   const part = parts.find((entry) => entry.name === DOCUMENT_PART);
   if (!part) {
-    throw new ExamError(`not a Word document: no ${DOCUMENT_PART} inside`);
+    throw new ExamError('not-a-docx');
   }
   return new TextDecoder('utf-8').decode(part.data);
 }
@@ -75,7 +68,12 @@ export async function parseExam(bytes: Uint8Array, source = 'test.docx'): Promis
   try {
     parts = await readZip(bytes);
   } catch (error) {
-    throw new ExamError(`could not read ${source}: ${(error as Error).message}`);
+    // A coded error already says what is wrong, in whatever language the page
+    // is in; only something unforeseen needs wrapping.
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new ExamError('unreadable', { source, detail: (error as Error).message });
   }
   const documentXml = documentPart(parts);
   const body = documentBody(parseXml(documentXml));
@@ -175,26 +173,26 @@ export async function parseExam(bytes: Uint8Array, source = 'test.docx'): Promis
 /** Fail loudly rather than emit a test with a wrong or missing key. */
 export function validateExam(exam: Exam): void {
   if (!exam.questions.length) {
-    throw new ExamError(`no questions found in ${exam.source}`);
+    throw new ExamError('no-questions', { source: exam.source });
   }
   for (const question of exam.questions) {
     const { number } = question;
     if (question.options.length < 2) {
-      throw new ExamError(`question ${number} has ${question.options.length} option(s)`);
+      throw new ExamError('too-few-options',
+        { number, count: question.options.length });
     }
     const markers = question.options.map((option) => option.letter);
     const folded = markers.map(foldMarker);
     if (new Set(folded).size !== folded.length) {
-      throw new ExamError(
-        `question ${number} has duplicate option markers: ${markers.join(', ')}`);
+      throw new ExamError('duplicate-markers', { number, markers: markers.join(', ') });
     }
     if (question.answer === null) {
-      throw new ExamError(`no answer key entry for question ${number}`);
+      throw new ExamError('no-key-entry', { number });
     }
     const answer = question.answer;
     if (!markers.some((marker) => sameMarker(answer, marker))) {
-      throw new ExamError(
-        `key for question ${number} is ${answer}, which is not one of ${markers.join(', ')}`);
+      throw new ExamError('key-not-an-option',
+        { number, answer, markers: markers.join(', ') });
     }
   }
 }

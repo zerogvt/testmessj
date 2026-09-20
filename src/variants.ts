@@ -4,6 +4,7 @@
 // elements are shared with the exam -- they are never mutated, only cloned at
 // render time -- while numbers, markers and the answer are new.
 
+import { AppError } from './errors';
 import { sameMarker } from './markers';
 import type { Exam, ExamOption } from './parse';
 
@@ -121,7 +122,7 @@ export function makeVariant(exam: Exam, index: number, rng: Rng): Variant {
     if (answer === null) {
       // validateExam() rules this out; reaching it would mean handing over a
       // paper whose key points at nothing, which is worse than no paper.
-      throw new Error(`question ${source.number} lost its answer while shuffling`);
+      throw new AppError('lost-answer', { number: source.number });
     }
 
     return {

@@ -60,6 +60,16 @@ change, not in the test.
   people print what this tool produces and hand it to a class. Wording and
   mechanism are pinned by `tests/disclaimer.test.ts`; the licence carries the
   same disclaimer.
+- **Both languages, or neither.** Every string a person reads goes in
+  `src/i18n.ts`, in English *and* Greek; errors carry a code and parameters,
+  never a finished sentence. `tests/i18n.test.ts` fails on a key that exists in
+  one table only, a Greek string left in English, a placeholder that appears in
+  one language and not the other, and on inline English in `index.html` that
+  has drifted from the table. The page is what a teacher trusts with an exam --
+  half-translated is worse than untranslated.
+- **The language must not reach the paper**, except for the professor copy's
+  banner, which is the only sentence this program writes into a document. A
+  student copy is byte-for-byte the same whichever flag is showing.
 - **Document content never becomes markup.** Anything read out of a `.docx`
   reaches the page through `textContent`, and the output document is built with
   DOM calls, not string concatenation. No `innerHTML`, ever.
@@ -124,7 +134,8 @@ machine: valid archive, every source part present, well-formed XML, original
 namespace declarations preserved, equations identical to the source markup for
 markup.
 
-Three things were confirmed by hand on 2026-09-19: Python's `zipfile` and the
+Three things were confirmed by hand on 2026-09-19 (and again, with both
+languages, on 2026-09-20): Python's `zipfile` and the
 original `testmess` parser read the papers this code writes; the built page
 produces papers that pass the same checks when driven in headless Chromium; and
 the papers from that browser run carry no author, company or template path,

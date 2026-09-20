@@ -8,6 +8,8 @@
 // the browser, the papers are built in the browser, and the only thing that
 // ever leaves the tab is the ZIP the user saves.
 
+import { AppError } from './errors';
+import { DEFAULT_LANG, type Lang } from './i18n';
 import { carriedOverWarnings, scrubMetadata } from './metadata';
 import { parseExam, type Exam } from './parse';
 import { writeVariant, type Paper } from './render';
@@ -25,6 +27,12 @@ export interface GenerateOptions {
    * did not ask for.  See `scrubMetadata`.
    */
   keepMetadata?: boolean;
+  /**
+   * The language of the one line this program writes into a paper: the
+   * professor copy's "Variant N" banner.  Everything else in the document is
+   * the teacher's own.
+   */
+  lang?: Lang;
 }
 
 export interface Generated {
@@ -45,7 +53,7 @@ export async function generatePapers(
 ): Promise<Generated> {
   const count = options.count ?? 3;
   if (!Number.isInteger(count) || count < 1) {
-    throw new RangeError('the number of variants must be at least 1');
+    throw new AppError('count-too-small');
   }
   const seed = options.seed ?? randomSeed();
 
@@ -59,7 +67,7 @@ export async function generatePapers(
   const variants = makeVariants(exam, count, seed);
   const papers: Paper[] = [];
   for (const variant of variants) {
-    papers.push(...await writeVariant(written, variant));
+    papers.push(...await writeVariant(written, variant, options.lang ?? DEFAULT_LANG));
   }
   return { exam, variants, papers, seed, warnings: carriedOverWarnings(exam.parts) };
 }
@@ -77,7 +85,10 @@ export async function bundlePapers(papers: Paper[]): Promise<Uint8Array> {
   return writeZip(papers.map((paper) => zipEntry(paper.name, paper.bytes, when)));
 }
 
-export { parseExam, validateExam, ExamError } from './parse';
+export { parseExam, validateExam } from './parse';
+export { AppError, ExamError } from './errors';
+export { STRINGS, LANGS, DEFAULT_LANG, t, format, detectLanguage } from './i18n';
+export type { Lang, Params } from './i18n';
 export type { Exam, ExamOption, ExamQuestion } from './parse';
 export { makeVariant, makeVariants, keyLine, seedFrom, randomSeed, Rng } from './variants';
 export type { Variant, VariantOption, VariantQuestion } from './variants';

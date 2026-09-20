@@ -52,7 +52,8 @@ describe('the sample downloads', () => {
   });
 
   it('reports a sample that cannot be loaded instead of failing silently', () => {
-    expect(main).toMatch(/could not load the sample/);
+    // The sentence itself lives in the string table, in both languages.
+    expect(main).toMatch(/'error\.sample'/);
   });
 });
 

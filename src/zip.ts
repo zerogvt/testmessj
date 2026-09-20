@@ -13,6 +13,8 @@
 // mean carrying zip64 and data-descriptor records that no longer describe the
 // bytes we just wrote.
 
+import { AppError } from './errors';
+
 const LOCAL_SIG = 0x04034b50;
 const CENTRAL_SIG = 0x02014b50;
 const EOCD_SIG = 0x06054b50;
@@ -31,8 +33,8 @@ const MAX_ARCHIVE_BYTES = 64 * 1024 * 1024;
 const MAX_PART_BYTES = 64 * 1024 * 1024;
 const MAX_TOTAL_BYTES = 256 * 1024 * 1024;
 
-function readable(bytes: number): string {
-  return `${Math.round(bytes / (1024 * 1024))} MB`;
+function megabytes(bytes: number): number {
+  return Math.round(bytes / (1024 * 1024));
 }
 
 export interface ZipEntry {
@@ -140,20 +142,20 @@ function findEndOfCentralDirectory(view: DataView): number {
       return offset;
     }
   }
-  throw new Error('not a ZIP archive (no end-of-central-directory record)');
+  throw new AppError('not-an-archive');
 }
 
 /** Read every part of an archive, decompressing as it goes. */
 export async function readZip(bytes: Uint8Array): Promise<ZipEntry[]> {
   if (bytes.length > MAX_ARCHIVE_BYTES) {
-    throw new Error(`that file is larger than ${readable(MAX_ARCHIVE_BYTES)}`);
+    throw new AppError('too-large', { limit: megabytes(MAX_ARCHIVE_BYTES) });
   }
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const eocd = findEndOfCentralDirectory(view);
   const count = view.getUint16(eocd + 10, true);
   const directory = view.getUint32(eocd + 16, true);
   if (count === 0xffff || directory === ZIP64_MARKER) {
-    throw new Error('zip64 archives are not supported');
+    throw new AppError('zip64');
   }
 
   const entries: ZipEntry[] = [];
@@ -161,7 +163,7 @@ export async function readZip(bytes: Uint8Array): Promise<ZipEntry[]> {
   let offset = directory;
   for (let index = 0; index < count; index += 1) {
     if (view.getUint32(offset, true) !== CENTRAL_SIG) {
-      throw new Error(`corrupt central directory at entry ${index + 1}`);
+      throw new AppError('corrupt-directory', { index: index + 1 });
     }
     const flags = view.getUint16(offset + 8, true);
     const method = view.getUint16(offset + 10, true);
@@ -177,21 +179,21 @@ export async function readZip(bytes: Uint8Array): Promise<ZipEntry[]> {
     const name = decoder.decode(bytes.subarray(offset + 46, offset + 46 + nameLength));
 
     if (flags & 0x1) {
-      throw new Error(`${name} is encrypted`);
+      throw new AppError('encrypted', { name });
     }
     if (compressedSize === ZIP64_MARKER || uncompressedSize === ZIP64_MARKER
         || localOffset === ZIP64_MARKER) {
-      throw new Error('zip64 archives are not supported');
+      throw new AppError('zip64');
     }
     if (view.getUint32(localOffset, true) !== LOCAL_SIG) {
-      throw new Error(`corrupt local header for ${name}`);
+      throw new AppError('corrupt-header', { name });
     }
     // Checked before inflating, not after: the point is not to unpack it.
     // The sizes are then verified against what actually came out, below, so a
     // header that understates itself does not get past this either.
     unpacked += uncompressedSize;
     if (uncompressedSize > MAX_PART_BYTES || unpacked > MAX_TOTAL_BYTES) {
-      throw new Error(`${name} unpacks to more than this page will handle`);
+      throw new AppError('unpacks-too-large', { name });
     }
 
     // The local header has its own name and extra lengths, which need not
@@ -207,10 +209,10 @@ export async function readZip(bytes: Uint8Array): Promise<ZipEntry[]> {
     } else if (method === DEFLATED) {
       data = await inflateRaw(raw);
     } else {
-      throw new Error(`${name} uses unsupported compression method ${method}`);
+      throw new AppError('unsupported-method', { name, method });
     }
     if (data.length !== uncompressedSize || crc32(data) !== crc) {
-      throw new Error(`${name} is corrupt (checksum mismatch)`);
+      throw new AppError('corrupt', { name });
     }
 
     entries.push({

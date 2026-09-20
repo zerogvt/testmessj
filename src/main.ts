@@ -6,11 +6,18 @@
 // pressed, so a document this program refuses to guess about (a missing key
 // entry, duplicate markers) is reported while the teacher is still looking at
 // the file they picked.
+//
+// Two languages, one page.  Everything written in the markup carries a
+// data-i18n key; everything written from here goes through t().  Switching
+// language re-renders whatever is on screen from the state below, so a run
+// already built does not have to be built again to be read in Greek.
 
 import {
   bundlePapers, carriedOverWarnings, generatePapers, parseExam, seedFrom,
 } from './testmess';
-import type { Exam, Paper } from './testmess';
+import type { Exam, Paper, Variant } from './testmess';
+import { AppError } from './errors';
+import { DEFAULT_LANG, LANGS, detectLanguage, t, type Lang, type Params } from './i18n';
 
 // Served from the root of the build (see publicDir in vite.config.ts), under
 // the same names the download links in the page use.
@@ -32,23 +39,121 @@ const status = document.querySelector<HTMLElement>('#status')!;
 const results = document.querySelector<HTMLElement>('#results')!;
 const notice = document.querySelector<HTMLDialogElement>('#notice')!;
 
+type Kind = 'info' | 'error' | 'ok' | 'warn';
+
 interface Source {
   name: string;
   bytes: Uint8Array;
   exam: Exam;
 }
 
+interface Run {
+  papers: Paper[];
+  variants: Variant[];
+  seed: number;
+}
+
+interface Message {
+  key: string;
+  params: Params;
+  kind: Kind;
+}
+
+let lang: Lang = DEFAULT_LANG;
 let source: Source | null = null;
+let run: Run | null = null;
+// The status lines are kept as keys, not as sentences, so they can change
+// language along with the rest of the page.
+let sourceMessage: Message | null = null;
+let statusMessage: Message | null = null;
+let warningMessage: Message | null = null;
 let download: { url: string; name: string } | null = null;
 
-function message(target: HTMLElement, text: string, kind: 'info' | 'error' | 'ok' | 'warn' = 'info') {
-  target.textContent = text;
-  target.className = `status ${kind}`;
+// --------------------------------------------------------------------------
+// Language
+// --------------------------------------------------------------------------
+
+function applyStrings(): void {
+  document.documentElement.lang = lang;
+  document.title = t(lang, 'page.title');
+  document.querySelector<HTMLMetaElement>('meta[name="description"]')
+    ?.setAttribute('content', t(lang, 'page.description'));
+
+  for (const node of document.querySelectorAll<HTMLElement>('[data-i18n]')) {
+    node.textContent = t(lang, node.dataset.i18n!);
+  }
+  for (const node of document.querySelectorAll<HTMLElement>('[data-i18n-placeholder]')) {
+    node.setAttribute('placeholder', t(lang, node.dataset.i18nPlaceholder!));
+  }
+  for (const button of document.querySelectorAll<HTMLButtonElement>('[data-lang]')) {
+    button.setAttribute('aria-pressed', String(button.dataset.lang === lang));
+  }
 }
+
+function setLanguage(next: Lang): void {
+  lang = next;
+  applyStrings();
+  // Anything already on screen has to follow.
+  renderMessage(sourceStatus, sourceMessage);
+  renderMessage(status, statusMessage);
+  renderMessage(warning, warningMessage);
+  renderRun();
+
+  // So a Greek page can be sent to somebody as a link.  replaceState keeps it
+  // out of the back button's way, and stores nothing.
+  const url = new URL(window.location.href);
+  if (next === DEFAULT_LANG) {
+    url.searchParams.delete('lang');
+  } else {
+    url.searchParams.set('lang', next);
+  }
+  window.history.replaceState(null, '', url);
+}
+
+// --------------------------------------------------------------------------
+// Saying things
+// --------------------------------------------------------------------------
+
+function renderMessage(target: HTMLElement, message: Message | null): void {
+  target.textContent = message ? t(lang, message.key, message.params) : '';
+  target.className = `status ${message?.kind ?? 'info'}`;
+}
+
+function say(
+  target: HTMLElement, key: string | null, params: Params = {}, kind: Kind = 'info',
+): void {
+  const message = key === null ? null : { key, params, kind };
+  if (target === sourceStatus) {
+    sourceMessage = message;
+  } else if (target === status) {
+    statusMessage = message;
+  } else if (target === warning) {
+    warningMessage = message;
+  }
+  renderMessage(target, message);
+}
+
+/** Report a failure in the reader's language, where the error has a code. */
+function complain(target: HTMLElement, error: unknown): void {
+  if (error instanceof AppError) {
+    say(target, error.key, error.params, 'error');
+    return;
+  }
+  // Something unforeseen: better the English than nothing.
+  say(target, null);
+  target.textContent = (error as Error).message;
+  target.className = 'status error';
+}
+
+// --------------------------------------------------------------------------
+// The work
+// --------------------------------------------------------------------------
 
 function clearResults(): void {
   results.replaceChildren();
   downloadButton.hidden = true;
+  run = null;
+  say(status, null);
   if (download) {
     URL.revokeObjectURL(download.url);
     download = null;
@@ -58,31 +163,35 @@ function clearResults(): void {
 /** Read a chosen file, and parse it straight away so errors surface early. */
 async function useDocument(name: string, bytes: Uint8Array): Promise<void> {
   clearResults();
-  message(warning, '');
+  say(warning, null);
   source = null;
   generateButton.disabled = true;
-  message(sourceStatus, `Reading ${name}…`);
+  say(sourceStatus, 'status.reading', { name });
   try {
     const exam = await parseExam(bytes, name);
     source = { name, bytes, exam };
-    const markers = exam.questions[0].options.map((option) => option.letter).join(' ');
-    const title = exam.title ? `${exam.title} — ` : '';
-    message(sourceStatus,
-      `${title}${exam.questions.length} questions, options marked ${markers} — ${name}`,
-      'ok');
+    say(sourceStatus, 'status.source', {
+      count: exam.questions.length,
+      markers: exam.questions[0].options.map((option) => option.letter).join(' '),
+      name,
+    }, 'ok');
     // Comments and tracked changes cannot be scrubbed without rewriting the
     // document, so the teacher is told rather than surprised.
     const carried = carriedOverWarnings(exam.parts);
     if (carried.length) {
-      message(warning,
-        `Careful: this document contains ${carried.join(' and ')}, which are `
-        + 'part of the file and will be carried into the papers. Remove them in '
-        + 'Word (Review tab) first if the class should not see them.', 'warn');
+      say(warning, 'status.warning', { what: listWarnings(carried) }, 'warn');
     }
     generateButton.disabled = false;
   } catch (error) {
-    message(sourceStatus, (error as Error).message, 'error');
+    complain(sourceStatus, error);
   }
+}
+
+/** "comments and tracked changes", in the page's language. */
+function listWarnings(carried: string[]): string {
+  return carried
+    .map((item) => t(lang, item === 'comments' ? 'warning.comments' : 'warning.tracked'))
+    .join(` ${t(lang, 'warning.and')} `);
 }
 
 async function readFile(file: File): Promise<void> {
@@ -98,7 +207,7 @@ async function loadSample(which: string): Promise<void> {
     }
     await useDocument(name, new Uint8Array(await response.arrayBuffer()));
   } catch {
-    message(sourceStatus, `could not load the sample (${name})`, 'error');
+    say(sourceStatus, 'error.sample', { name }, 'error');
   }
 }
 
@@ -111,33 +220,42 @@ function chosenSeed(): number | undefined {
   return /^\d+$/.test(text) ? Number(text) >>> 0 : seedFrom(text);
 }
 
-function showResults(papers: Paper[], keys: string[], seed: number): void {
+/** Draw the table of variants, in whatever language the page is in. */
+function renderRun(): void {
+  if (!run) {
+    return;
+  }
   const table = document.createElement('table');
   const head = table.createTHead().insertRow();
-  for (const label of ['Variant', 'Files', 'Answer key']) {
+  for (const key of ['results.variant', 'results.files', 'results.key']) {
     const cell = document.createElement('th');
-    cell.textContent = label;
+    cell.textContent = t(lang, key);
     head.append(cell);
   }
   const body = table.createTBody();
-  keys.forEach((key, index) => {
+  for (const variant of run.variants) {
     const row = body.insertRow();
-    row.insertCell().textContent = String(index + 1);
-    const names = papers
-      .filter((paper) => paper.variant === index + 1)
+    row.insertCell().textContent = String(variant.index);
+    row.insertCell().textContent = run.papers
+      .filter((paper) => paper.variant === variant.index)
       .map((paper) => paper.name)
       .join(', ');
-    row.insertCell().textContent = names;
     const cell = row.insertCell();
     cell.className = 'key';
-    cell.textContent = key;
-  });
+    cell.textContent = variant.questions
+      .map((question) => `${question.number}${question.answer}`)
+      .join(', ');
+  }
 
   const note = document.createElement('p');
   note.className = 'hint';
-  note.textContent = `Seed ${seed} — type it into the seed box to rebuild exactly these papers.`;
-
+  note.textContent = t(lang, 'results.seed', { seed: run.seed });
   results.replaceChildren(table, note);
+
+  if (download) {
+    downloadButton.textContent = t(lang, 'download.button',
+      { name: download.name, papers: run.papers.length });
+  }
 }
 
 async function build(): Promise<void> {
@@ -146,26 +264,24 @@ async function build(): Promise<void> {
   }
   clearResults();
   generateButton.disabled = true;
-  message(status, 'Building the papers…');
+  say(status, 'status.building');
   try {
     const { papers, variants, seed } = await generatePapers(source.bytes, source.name, {
       count: Number(countInput.value),
       seed: chosenSeed(),
       keepMetadata: !scrubInput.checked,
+      lang,
     });
     const archive = await bundlePapers(papers);
     const base = source.name.replace(/\.docx$/i, '');
     const blob = new Blob([archive as BlobPart], { type: 'application/zip' });
     download = { url: URL.createObjectURL(blob), name: `${base}-variants.zip` };
-    downloadButton.textContent = `Download ${download.name} (${papers.length} papers)`;
+    run = { papers, variants, seed };
     downloadButton.hidden = false;
-    showResults(papers, variants.map(
-      (variant) => variant.questions.map((q) => `${q.number}${q.answer}`).join(', ')), seed);
-    message(status,
-      `${variants.length} variants ready: ${papers.length} documents. `
-      + 'Hand out the student copies; the professor copies carry the key.', 'ok');
+    renderRun();
+    say(status, 'status.ready', { variants: variants.length, papers: papers.length }, 'ok');
   } catch (error) {
-    message(status, (error as Error).message, 'error');
+    complain(status, error);
   } finally {
     generateButton.disabled = false;
   }
@@ -216,7 +332,18 @@ for (const id of ['show-notice', 'show-notice-footer']) {
     'click', () => openNotice());
 }
 
-openNotice();
+// --------------------------------------------------------------------------
+// Wiring
+// --------------------------------------------------------------------------
+
+for (const button of document.querySelectorAll<HTMLButtonElement>('[data-lang]')) {
+  button.addEventListener('click', () => {
+    const next = button.dataset.lang as Lang;
+    if ((LANGS as readonly string[]).includes(next) && next !== lang) {
+      setLanguage(next);
+    }
+  });
+}
 
 fileInput.addEventListener('change', () => {
   const file = fileInput.files?.[0];
@@ -271,3 +398,8 @@ window.addEventListener('pagehide', () => {
     download = null;
   }
 });
+
+// The page opens in the language it was asked for, or the browser's own.
+setLanguage(detectLanguage());
+
+openNotice();

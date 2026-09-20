@@ -11,7 +11,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  generatePapers, makeVariants, parseExam, sameMarker, type Paper,
+  generatePapers, makeVariants, parseExam, readZip, sameMarker, writeZip,
+  type Paper,
 } from '../src/testmess';
 import { paragraphText } from '../src/xml';
 import {
@@ -167,5 +168,38 @@ describe.each(FIXTURES)('$name sample', (fixture) => {
         expect(item2, item.name).toEqual([...fixture.markers]);
       }
     }
+  });
+});
+
+describe('a test written in Greek', () => {
+  it('is read when its key page is headed in Greek', async () => {
+    // The page speaks Greek, so the documents it is given will too: a teacher
+    // heading the last page "ΑΠΑΝΤΗΣΕΙΣ" must not be told there is no key.
+    // Built from a sample rather than a fixture file, so it cannot go stale.
+    const parts = await readZip(sampleBytes('calculus_practice_test_3.docx'));
+    const rewritten = parts.map((part) => {
+      if (part.name !== 'word/document.xml') {
+        return part;
+      }
+      const xml = new TextDecoder().decode(part.data).replace('Answer Key', 'ΑΠΑΝΤΗΣΕΙΣ');
+      return { ...part, data: new TextEncoder().encode(xml) };
+    });
+
+    const exam = await parseExam(await writeZip(rewritten), 'greek_headed.docx');
+    expect(exam.questions).toHaveLength(10);
+    expect(exam.questions.map((question) => question.answer))
+      .toEqual(Object.values(FIXTURES[1].key));
+    expect(exam.keyTemplates.heading).not.toBeNull();
+
+    // And the papers it writes keep that heading, rather than reverting to
+    // English: the professor copy is stamped from the source's own paragraph.
+    const { papers } = await generatePapers(
+      await writeZip(rewritten), 'greek_headed.docx', { count: 1, seed: 3 });
+    const professor = papers.find((paper) => paper.kind === 'professor')!;
+    const texts = paragraphTexts(await documentRoot(professor.bytes));
+    expect(texts.some((text) => text.includes('ΑΠΑΝΤΗΣΕΙΣ'))).toBe(true);
+    // The heading is the source's own paragraph, not one this program writes,
+    // so it stays Greek.  (The banner is a different matter -- see below.)
+    expect(texts.some((text) => text.trim() === 'Answer Key')).toBe(false);
   });
 });

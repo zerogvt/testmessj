@@ -123,6 +123,41 @@ main {
   margin: 0 auto;
 }
 
+/* The language switcher: flags with the language's own name beside them, so
+   it reads correctly whichever language you already speak. */
+.langs {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  margin-bottom: 0.9rem;
+}
+
+.lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--muted);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.82rem;
+}
+
+.lang[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.lang .flag {
+  width: 1.25rem;
+  height: auto;
+  border: 1px solid rgb(0 0 0 / 20%);
+  border-radius: 2px;
+}
+
 h1 {
   margin: 0 0 0.3rem;
   font-size: 2.4rem;

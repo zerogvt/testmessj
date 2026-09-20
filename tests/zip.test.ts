@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { readZip, writeZip, zipEntry } from '../src/testmess';
+import { AppError, readZip, writeZip, zipEntry } from '../src/testmess';
 import { DEFLATED, STORED, crc32 } from '../src/zip';
 import { SOURCE, sampleBytes } from './helpers';
 
@@ -26,8 +26,11 @@ describe('readZip', () => {
   });
 
   it('refuses anything that is not an archive', async () => {
-    await expect(readZip(bytes('Dear students, ...')))
-      .rejects.toThrow(/not a ZIP archive/);
+    // Asserted by code, not by sentence: the sentence is translated.
+    const error = await readZip(bytes('Dear students, ...'))
+      .catch((thrown: unknown) => thrown as AppError);
+    expect(error).toBeInstanceOf(AppError);
+    expect((error as AppError).code).toBe('not-an-archive');
   });
 
   it('notices a corrupt part', async () => {
@@ -96,7 +99,7 @@ describe('limits', () => {
     // Only the length is inspected before anything is unpacked, so this costs
     // nothing but the allocation.
     const huge = new Uint8Array(65 * 1024 * 1024);
-    await expect(readZip(huge)).rejects.toThrow(/larger than/);
+    await expect(readZip(huge)).rejects.toMatchObject({ code: 'too-large' });
   });
 
   it('refuses a part that claims to unpack to absurdity', async () => {
@@ -110,6 +113,6 @@ describe('limits', () => {
     }
     expect(central).toBeGreaterThan(-1);
     view.setUint32(central + 24, 200 * 1024 * 1024, true);
-    await expect(readZip(archive)).rejects.toThrow(/more than this page will handle/);
+    await expect(readZip(archive)).rejects.toMatchObject({ code: 'unpacks-too-large' });
   });
 });

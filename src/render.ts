@@ -9,6 +9,7 @@
 // therefore literally the originals, so a variant renders exactly like the
 // source test.
 
+import { DEFAULT_LANG, t, type Lang } from './i18n';
 import { KEY_ENTRY, OPTION_LABEL, QUESTION_LABEL } from './markers';
 import { DOCUMENT_PART, type Exam } from './parse';
 import type { Variant } from './variants';
@@ -96,8 +97,10 @@ function pageBreakParagraph(doc: Document): Element {
  * visibly stamped copy out of several.  Which variant a student paper is can
  * be read off its file name, or off the professor copy it matches.
  */
-function bannerParagraph(doc: Document, variant: Variant): Element {
-  const label = `Variant ${variant.index} - Professor copy (with answer key)`;
+function bannerParagraph(doc: Document, variant: Variant, lang: Lang): Element {
+  // The only sentence this program ever adds to a document, so it is the only
+  // one that has to follow the language the teacher is working in.
+  const label = t(lang, 'paper.banner', { index: variant.index });
   return textParagraph(doc, label,
     { bold: true, centered: true, size: '22', after: '160' });
 }
@@ -122,13 +125,16 @@ function keyEntryParagraph(
   return textParagraph(doc, `${number}.  ${letter}`, { after: '40' });
 }
 
-function keyParagraphs(doc: Document, exam: Exam, variant: Variant): Element[] {
+function keyParagraphs(
+  doc: Document, exam: Exam, variant: Variant, lang: Lang,
+): Element[] {
   const { pageBreak, heading } = exam.keyTemplates;
   const paragraphs: Element[] = [
     pageBreak !== null ? doc.importNode(pageBreak, true) : pageBreakParagraph(doc),
     heading !== null
       ? doc.importNode(heading, true)
-      : textParagraph(doc, 'Answer Key', { bold: true, size: '28', after: '160' }),
+      : textParagraph(doc, t(lang, 'paper.key'),
+        { bold: true, size: '28', after: '160' }),
   ];
   for (const question of variant.questions) {
     paragraphs.push(keyEntryParagraph(doc, exam, question.number, question.answer));
@@ -142,7 +148,7 @@ function keyParagraphs(doc: Document, exam: Exam, variant: Variant): Element[] {
 
 /** Rebuild word/document.xml for one variant, reusing the source markup. */
 export function renderDocumentXml(
-  exam: Exam, variant: Variant, includeKey: boolean,
+  exam: Exam, variant: Variant, includeKey: boolean, lang: Lang = DEFAULT_LANG,
 ): string {
   const doc = parseXml(exam.documentXml);
   const body = documentBody(doc);
@@ -156,7 +162,7 @@ export function renderDocumentXml(
     body.append(doc.importNode(paragraph, true));
   }
   if (includeKey) {
-    body.append(bannerParagraph(doc, variant));
+    body.append(bannerParagraph(doc, variant, lang));
   }
 
   for (const question of variant.questions) {
@@ -171,7 +177,7 @@ export function renderDocumentXml(
   }
 
   if (includeKey) {
-    body.append(...keyParagraphs(doc, exam, variant));
+    body.append(...keyParagraphs(doc, exam, variant, lang));
   }
   if (sectionProperties !== null) {
     body.append(sectionProperties);
@@ -201,7 +207,9 @@ export async function writeDocx(exam: Exam, documentXml: string): Promise<Uint8A
 }
 
 /** Write one variant twice: the student paper, and the professor's copy. */
-export async function writeVariant(exam: Exam, variant: Variant): Promise<Paper[]> {
+export async function writeVariant(
+  exam: Exam, variant: Variant, lang: Lang = DEFAULT_LANG,
+): Promise<Paper[]> {
   const [studentName, professorName] = variantNames(variant.index);
   const papers: Paper[] = [];
   for (const [name, kind, includeKey] of [
@@ -212,7 +220,7 @@ export async function writeVariant(exam: Exam, variant: Variant): Promise<Paper[
       name,
       kind,
       variant: variant.index,
-      bytes: await writeDocx(exam, renderDocumentXml(exam, variant, includeKey)),
+      bytes: await writeDocx(exam, renderDocumentXml(exam, variant, includeKey, lang)),
     });
   }
   return papers;

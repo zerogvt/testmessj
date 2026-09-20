@@ -1,7 +1,9 @@
 // feature: exam-variants
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { ExamError, parseExam, validateExam, type Exam } from '../src/testmess';
+import {
+  ExamError, parseExam, validateExam, writeZip, zipEntry, type Exam,
+} from '../src/testmess';
 import { parseXml, serialize } from '../src/xml';
 import { FIXTURES, SOURCE, countMath, sampleBytes } from './helpers';
 
@@ -70,8 +72,16 @@ describe('parseExam', () => {
   });
 
   it('refuses a file that is not a Word document', async () => {
+    // A file that is not even an archive is refused where it is read, with
+    // its own code, rather than being wrapped in a vaguer one.
     await expect(parseExam(new TextEncoder().encode('not a zip at all'), 'notes.txt'))
-      .rejects.toThrow(ExamError);
+      .rejects.toMatchObject({ code: 'not-an-archive' });
+  });
+
+  it('refuses an archive that is not a Word document', async () => {
+    const notWord = await writeZip([zipEntry('hello.txt', new TextEncoder().encode('hi'))]);
+    await expect(parseExam(notWord, 'notes.zip'))
+      .rejects.toMatchObject({ code: 'not-a-docx' });
   });
 });
 
@@ -97,13 +107,24 @@ describe('validateExam', () => {
   it('rejects a missing key entry', () => {
     expect(() => validateExam(withExam((copy) => {
       copy.questions[2].answer = null;
-    }))).toThrow(/no answer key entry for question 3/);
+    }))).toThrow(ExamError);
+    try {
+      validateExam(withExam((copy) => { copy.questions[2].answer = null; }));
+    } catch (error) {
+      expect(error).toMatchObject({ code: 'no-key-entry', params: { number: 3 } });
+    }
   });
 
   it('rejects a key pointing at a missing option', () => {
     expect(() => validateExam(withExam((copy) => {
       copy.questions[2].answer = 'Z';
     }))).toThrow(/not one of/);
+    // and by code, which is what the page renders in Greek
+    try {
+      validateExam(withExam((copy) => { copy.questions[2].answer = 'Z'; }));
+    } catch (error) {
+      expect(error).toMatchObject({ code: 'key-not-an-option' });
+    }
   });
 
   it('rejects a question without options', () => {
