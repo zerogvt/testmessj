@@ -111,10 +111,36 @@
             <input id="file" type="file" accept=".docx" />
             <span>Choose a .docx file</span>
           </label>
+          <p class="hint">or drag it here</p>
+        </div>
+
+        <div class="samples">
           <p class="hint">
-            or drag it here — or try a sample:
-            <button type="button" class="link" data-sample="latin">Latin (A)–(D)</button>
-            <button type="button" class="link" data-sample="greek">Greek α)–δ)</button>
+            <strong>New to this?</strong> Start from a sample. <em>Load</em> one
+            to see what comes out; <em>download</em> one and open it in Word to
+            see exactly how a test has to be laid out — how questions are
+            numbered, how options are marked, and the <strong>Answer Key</strong>
+            page at the end. Save a copy, type your own questions over the top,
+            and you have a document this program can read.
+          </p>
+          <ul class="sample-list">
+            <li>
+              <span>Latin markers <code>(A)</code>–<code>(D)</code></span>
+              <button type="button" class="link" data-sample="latin">Load it</button>
+              <a class="link" href="./calculus_practice_test_2.docx"
+                 download="calculus_practice_test_2.docx">Download the .docx</a>
+            </li>
+            <li>
+              <span>Greek markers <code>α)</code>–<code>δ)</code></span>
+              <button type="button" class="link" data-sample="greek">Load it</button>
+              <a class="link" href="./calculus_practice_test_3.docx"
+                 download="calculus_practice_test_3.docx">Download the .docx</a>
+            </li>
+          </ul>
+          <p class="hint">
+            Both samples are the same ten questions, marked in two different
+            alphabets — the markers in your own test are used as they are, so a
+            Greek-lettered paper stays Greek-lettered.
           </p>
         </div>
         <p id="source" class="status" role="status"></p>

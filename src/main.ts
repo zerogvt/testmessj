@@ -7,16 +7,16 @@
 // entry, duplicate markers) is reported while the teacher is still looking at
 // the file they picked.
 
-import latinSample from '../samples/calculus_practice_test_2.docx?url';
-import greekSample from '../samples/calculus_practice_test_3.docx?url';
 import {
   bundlePapers, carriedOverWarnings, generatePapers, parseExam, seedFrom,
 } from './testmess';
 import type { Exam, Paper } from './testmess';
 
-const SAMPLES: Record<string, { url: string; name: string }> = {
-  latin: { url: latinSample, name: 'calculus_practice_test_2.docx' },
-  greek: { url: greekSample, name: 'calculus_practice_test_3.docx' },
+// Served from the root of the build (see publicDir in vite.config.ts), under
+// the same names the download links in the page use.
+const SAMPLES: Record<string, string> = {
+  latin: 'calculus_practice_test_2.docx',
+  greek: 'calculus_practice_test_3.docx',
 };
 
 const fileInput = document.querySelector<HTMLInputElement>('#file')!;
@@ -90,9 +90,16 @@ async function readFile(file: File): Promise<void> {
 }
 
 async function loadSample(which: string): Promise<void> {
-  const sample = SAMPLES[which];
-  const response = await fetch(sample.url);
-  await useDocument(sample.name, new Uint8Array(await response.arrayBuffer()));
+  const name = SAMPLES[which];
+  try {
+    const response = await fetch(`./${name}`);
+    if (!response.ok) {
+      throw new Error(`${response.status}`);
+    }
+    await useDocument(name, new Uint8Array(await response.arrayBuffer()));
+  } catch {
+    message(sourceStatus, `could not load the sample (${name})`, 'error');
+  }
 }
 
 /** How the seed box is read: a number is itself, any other text is hashed. */

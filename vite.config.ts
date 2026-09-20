@@ -6,10 +6,12 @@ export default defineConfig({
   // Relative, so the built page works from https://<user>.github.io/testmessj/
   // as happily as it does from a file opened locally.
   base: './',
-  // The sample tests are imported with ?url, so Vite emits them itself; there
-  // is no public/ directory to copy.
-  publicDir: false,
-  assetsInclude: ['**/*.docx'],
+  // samples/ is the static directory, so both sample tests are copied to the
+  // root of the build under their own names.  They are deliberately not
+  // fingerprinted assets: a teacher is meant to be able to download one, open
+  // it in Word and copy its layout, and a link worth sending someone should
+  // not change its name on every build.
+  publicDir: 'samples',
   build: {
     outDir: 'dist',
     target: 'es2022',

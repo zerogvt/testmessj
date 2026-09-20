@@ -40,10 +40,15 @@ that has to be acknowledged on every visit.
 **1. Open the page:** <https://zerogvt.github.io/testmessj/>
 
 **2. Choose your test** — drag the `.docx` onto the page, or click *Choose a
-.docx file*. (No test to hand? Click one of the two samples.) The page reads
-it straight away and tells you how many questions it found; if it cannot make
-sense of the document it says so there and then, rather than handing you a
-half-correct paper.
+.docx file*. The page reads it straight away and tells you how many questions
+it found; if it cannot make sense of the document it says so there and then,
+rather than handing you a half-correct paper.
+
+*Never done this before?* The page offers two sample tests. **Load** one to see
+what comes out, or **download** one and open it in Word: that shows you exactly
+what a document has to look like — how questions are numbered, how options are
+marked, and the **Answer Key** page at the end. Save a copy, type your own
+questions over the top, and you have a test this program can read.
 
 **3. Say how many variants you want** (3 by default) and press *Generate
 variants*.
@@ -97,7 +102,9 @@ Equations written with the Word equation editor survive untouched. See
 
 ## What the source document must look like
 
-The parser follows the layout of `samples/calculus_practice_test_2.docx`:
+The parser follows the layout of `samples/calculus_practice_test_2.docx`, which
+you can download from the page itself — the quickest way to see all of this is
+to open that file in Word:
 
 - Any front matter (title, instructions) above the first question — copied to
   every variant as-is.
@@ -162,8 +169,8 @@ your_test.docx (read in the tab, never uploaded)
 | `src/render.ts` | rebuilding `word/document.xml`, writing the packages |
 | `src/testmess.ts` | the whole pipeline in one call, plus the public exports |
 | `src/main.ts` | the page: file in, ZIP out |
-| `tests/` | 161 tests, `vitest` |
-| `samples/*.docx` | the two sample tests, Latin-lettered and Greek-lettered |
+| `tests/` | 171 tests, `vitest` |
+| `samples/*.docx` | the two sample tests, Latin- and Greek-lettered; also the page's static directory, so they are served for download under their own names |
 
 ### 1. `parseExam(bytes, name) -> Exam`
 
@@ -288,7 +295,7 @@ and test tooling only, and none of them reaches the published page — about
 ```bash
 npm install
 npm run dev        # the page, on a local server, reloading as you edit
-npm test           # 161 tests
+npm test           # 171 tests
 npm run typecheck  # tsc --noEmit
 npm run build      # the static site, into dist/
 ```

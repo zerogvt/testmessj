@@ -183,6 +183,44 @@ h2 {
   background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
+.samples {
+  margin-top: 1.1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--line);
+}
+
+.sample-list {
+  margin: 0.7rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sample-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  align-items: baseline;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--line);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.92rem;
+}
+
+.sample-list li:last-child {
+  border-bottom: 0;
+}
+
+.sample-list li > span:first-child {
+  flex: 1 1 12rem;
+}
+
+.sample-list code {
+  padding: 0 0.2rem;
+  background: var(--caution-bg);
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
 .file input {
   position: absolute;
   width: 1px;
