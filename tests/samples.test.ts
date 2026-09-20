@@ -48,13 +48,13 @@ describe('the sample downloads', () => {
   });
 
   it('offers one without an answer key, and says so', () => {
-    const block = /<div class="samples">[\s\S]*?<\/ul>/.exec(html)![0].replace(/\s+/g, ' ');
+    const block = /<details class="samples">[\s\S]*?<\/ul>/.exec(html)![0].replace(/\s+/g, ' ');
     expect(block).toMatch(/no answer key/i);
     expect(block).toContain('data-sample="nokey"');
   });
 
   it('says what the downloads are for', () => {
-    const block = /<div class="samples">[\s\S]*?<\/div>/.exec(html)![0].replace(/\s+/g, ' ');
+    const block = /<details class="samples">[\s\S]*?<\/details>/.exec(html)![0].replace(/\s+/g, ' ');
     expect(block).toMatch(/open it in Word/i);
     expect(block).toMatch(/answer key/i);
     expect(block).toMatch(/load it/i);
@@ -62,7 +62,7 @@ describe('the sample downloads', () => {
 
   it('reports a sample that cannot be loaded instead of failing silently', () => {
     // The sentence itself lives in the string table, in both languages.
-    expect(main).toMatch(/'error\.sample'/);
+    expect(main).toMatch(/new AppError\('sample'/);
   });
 });
 

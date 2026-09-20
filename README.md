@@ -44,11 +44,15 @@ and the two flags at the top switch between them; `?lang=el` on the end of the
 address opens it in Greek, which is the link to send a colleague.
 
 **2. Choose your test** — drag the `.docx` onto the page, or click *Choose a
-.docx file*. The page reads it straight away and tells you how many questions
-it found; if it cannot make sense of the document it says so there and then,
-rather than handing you a half-correct paper.
+.docx file*. The page reads it straight away and answers under the picker, in
+green: the file's own name, what it found inside (the title, how many
+questions, which markers), and whether there is an answer key. If it cannot
+make sense of the document, the same card turns red and says why, rather than
+handing you a half-correct paper.
 
-*Never done this before?* The page offers two sample tests. **Load** one to see
+*Never done this before?* Open **First time here? Start from a sample test** —
+it stays folded away once you know your way around. The page offers three
+sample tests. **Load** one to see
 what comes out, or **download** one and open it in Word: that shows you exactly
 what a document has to look like — how questions are numbered, how options are
 marked, and the **Answer Key** page at the end. Save a copy, type your own
@@ -220,7 +224,7 @@ your_test.docx (read in the tab, never uploaded)
 | `src/render.ts` | rebuilding `word/document.xml`, writing the packages |
 | `src/testmess.ts` | the whole pipeline in one call, plus the public exports |
 | `src/main.ts` | the page: file in, ZIP out |
-| `tests/` | 228 tests, `vitest` |
+| `tests/` | 239 tests, `vitest` |
 | `samples/*.docx` | three sample tests — Latin-lettered, Greek-lettered, and Greek with no answer key; also the page's static directory, so they are served for download under their own names |
 
 ### 1. `parseExam(bytes, name) -> Exam`
@@ -349,7 +353,7 @@ and test tooling only, and none of them reaches the published page — about
 ```bash
 npm install
 npm run dev        # the page, on a local server, reloading as you edit
-npm test           # 228 tests
+npm test           # 239 tests
 npm run typecheck  # tsc --noEmit
 npm run build      # the static site, into dist/
 ```

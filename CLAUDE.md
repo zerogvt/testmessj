@@ -99,6 +99,22 @@ change, not in the test.
 - Generated papers are downloads, not files in the tree; `dist/` and
   `node_modules/` are gitignored. The sample sources are not.
 
+## The page
+
+- **Step 1 answers "did that work?" where it was asked.** The card under the
+  file picker leads with the document's own name -- that is what a teacher
+  recognises -- then what was read out of it, then what it means for the run
+  (answer key, or student copies only). Green when it was read, red when it
+  was not, amber for what the file carries that a scrub cannot reach. The
+  tints are defined for both themes in `style.css`; add a state and you add
+  both.
+- **The first-timer advice folds.** Someone who has done this before should
+  see their own document, not the instructions. Closed by default, with a
+  summary that says what is behind it.
+- Errors are shown on that card as *the file could not be read* plus the
+  coded reason underneath; `tests/outcome.test.ts` pins the ordering, the
+  colours and the states.
+
 ## Things that bit us
 
 - **A prevented `cancel` does not keep a `<dialog>` open in Chromium.** Before

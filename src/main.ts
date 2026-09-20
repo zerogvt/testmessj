@@ -34,7 +34,10 @@ const seedInput = document.querySelector<HTMLInputElement>('#seed')!;
 const scrubInput = document.querySelector<HTMLInputElement>('#scrub')!;
 const generateButton = document.querySelector<HTMLButtonElement>('#generate')!;
 const downloadButton = document.querySelector<HTMLButtonElement>('#download')!;
-const sourceStatus = document.querySelector<HTMLElement>('#source')!;
+const sourceCard = document.querySelector<HTMLElement>('#source')!;
+const sourceName = document.querySelector<HTMLElement>('#source-name')!;
+const sourceDetail = document.querySelector<HTMLElement>('#source-detail')!;
+const sourceNote = document.querySelector<HTMLElement>('#source-note')!;
 const warning = document.querySelector<HTMLElement>('#warning')!;
 const status = document.querySelector<HTMLElement>('#status')!;
 const results = document.querySelector<HTMLElement>('#results')!;
@@ -61,12 +64,24 @@ interface Message {
   kind: Kind;
 }
 
+/**
+ * What the card under the file picker says: the document's own name, what was
+ * read out of it, and what that means for the run.  Held as keys rather than
+ * sentences so it can change language along with the rest of the page.
+ */
+interface Outcome {
+  kind: 'reading' | 'ok' | 'error';
+  name: string;
+  detail: Message | null;
+  note: Message | null;
+}
+
 let lang: Lang = DEFAULT_LANG;
 let source: Source | null = null;
 let run: Run | null = null;
 // The status lines are kept as keys, not as sentences, so they can change
 // language along with the rest of the page.
-let sourceMessage: Message | null = null;
+let outcome: Outcome | null = null;
 let statusMessage: Message | null = null;
 let warningMessage: Message | null = null;
 let download: { url: string; name: string } | null = null;
@@ -96,7 +111,7 @@ function setLanguage(next: Lang): void {
   lang = next;
   applyStrings();
   // Anything already on screen has to follow.
-  renderMessage(sourceStatus, sourceMessage);
+  renderOutcome();
   renderMessage(status, statusMessage);
   renderMessage(warning, warningMessage);
   renderRun();
@@ -116,8 +131,35 @@ function setLanguage(next: Lang): void {
 // Saying things
 // --------------------------------------------------------------------------
 
+function renderOutcome(): void {
+  if (!outcome) {
+    sourceCard.hidden = true;
+    return;
+  }
+  sourceCard.hidden = false;
+  sourceCard.className = `outcome ${outcome.kind === 'reading' ? '' : outcome.kind}`.trim();
+  sourceName.textContent = outcome.name;
+  sourceDetail.textContent = outcome.detail
+    ? t(lang, outcome.detail.key, outcome.detail.params) : '';
+  sourceNote.textContent = outcome.note ? t(lang, outcome.note.key, outcome.note.params) : '';
+}
+
+function showOutcome(
+  kind: Outcome['kind'], name: string,
+  detail: Message | null = null, note: Message | null = null,
+): void {
+  outcome = { kind, name, detail, note };
+  renderOutcome();
+}
+
 function renderMessage(target: HTMLElement, message: Message | null): void {
   target.textContent = message ? t(lang, message.key, message.params) : '';
+  if (target === warning) {
+    // The warning is a card of its own, shown only when there is something to
+    // warn about.
+    target.hidden = message === null;
+    return;
+  }
   target.className = `status ${message?.kind ?? 'info'}`;
 }
 
@@ -125,9 +167,7 @@ function say(
   target: HTMLElement, key: string | null, params: Params = {}, kind: Kind = 'info',
 ): void {
   const message = key === null ? null : { key, params, kind };
-  if (target === sourceStatus) {
-    sourceMessage = message;
-  } else if (target === status) {
+  if (target === status) {
     statusMessage = message;
   } else if (target === warning) {
     warningMessage = message;
@@ -145,6 +185,14 @@ function complain(target: HTMLElement, error: unknown): void {
   say(target, null);
   target.textContent = (error as Error).message;
   target.className = 'status error';
+}
+
+/** The same, on the card under the file picker. */
+function complainAboutSource(name: string, error: unknown): void {
+  const detail: Message = error instanceof AppError
+    ? { key: error.key, params: error.params, kind: 'error' }
+    : { key: (error as Error).message, params: {}, kind: 'error' };
+  showOutcome('error', name, { key: 'status.failed', params: {}, kind: 'error' }, detail);
 }
 
 // --------------------------------------------------------------------------
@@ -168,21 +216,24 @@ async function useDocument(name: string, bytes: Uint8Array): Promise<void> {
   say(warning, null);
   source = null;
   generateButton.disabled = true;
-  say(sourceStatus, 'status.reading', { name });
+  showOutcome('reading', name, { key: 'status.reading', params: {}, kind: 'info' });
   try {
     const exam = await parseExam(bytes, name);
     source = { name, bytes, exam };
-    say(sourceStatus, 'status.source', {
+
+    const facts: Params = {
       count: exam.questions.length,
       markers: exam.questions[0].options.map((option) => option.letter).join(' '),
-      name,
-    }, 'ok');
-    // A test with no answer key page is an ordinary test -- said plainly,
-    // where the file was chosen, so nobody waits for professor copies that
-    // are never coming.
-    if (!exam.hasKey) {
-      say(warning, 'status.nokey', {}, 'info');
+    };
+    if (exam.title) {
+      facts.title = exam.title;
     }
+    // Whether there is an answer key decides what comes out of the run, so it
+    // is said here rather than left for the teacher to notice afterwards.
+    showOutcome('ok', name,
+      { key: exam.title ? 'status.source.titled' : 'status.source', params: facts, kind: 'ok' },
+      { key: exam.hasKey ? 'status.haskey' : 'status.nokey', params: {}, kind: 'ok' });
+
     // Comments and tracked changes cannot be scrubbed without rewriting the
     // document, so the teacher is told rather than surprised.
     const carried = carriedOverWarnings(exam.parts);
@@ -191,7 +242,7 @@ async function useDocument(name: string, bytes: Uint8Array): Promise<void> {
     }
     generateButton.disabled = false;
   } catch (error) {
-    complain(sourceStatus, error);
+    complainAboutSource(name, error);
   }
 }
 
@@ -214,8 +265,9 @@ async function loadSample(which: string): Promise<void> {
       throw new Error(`${response.status}`);
     }
     await useDocument(name, new Uint8Array(await response.arrayBuffer()));
-  } catch {
-    say(sourceStatus, 'error.sample', { name }, 'error');
+  } catch (error) {
+    complainAboutSource(name, error instanceof AppError
+      ? error : new AppError('sample', { name }));
   }
 }
 

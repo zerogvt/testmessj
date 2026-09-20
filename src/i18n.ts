@@ -89,6 +89,7 @@ const EN: Record<string, string> = {
   'step1.title': 'Choose the test',
   'step1.choose': 'Choose a .docx file',
   'step1.drag': 'or drag it here',
+  'samples.summary': 'First time here? Start from a sample test',
   'samples.intro':
     'New to this? Start from a sample. Load one to see what comes out; download '
     + 'one and open it in Word to see exactly how a test has to be laid out — '
@@ -132,8 +133,12 @@ const EN: Record<string, string> = {
   'step3.download': 'Download papers.zip',
 
   // -- what the page says while it works ---------------------------------
-  'status.reading': 'Reading {name}…',
-  'status.source': '{count} questions, options marked {markers} — {name}',
+  'status.reading': 'Reading it…',
+  'status.source': '{count} questions, options marked {markers}',
+  'status.source.titled': '{title} — {count} questions, options marked {markers}',
+  'status.haskey':
+    'Answer key found: every variant gets a student copy and a professor copy.',
+  'status.failed': 'This document could not be read.',
   'status.building': 'Building the papers…',
   'status.ready':
     '{variants} variants ready: {papers} documents. Hand out the student '
@@ -142,8 +147,8 @@ const EN: Record<string, string> = {
     '{variants} variants ready: {papers} student copies. There are no professor '
     + 'copies, because this test came without an answer key.',
   'status.nokey':
-    'This test has no answer key page, so only student copies will be made — '
-    + 'one per variant, and no key to hand out by mistake.',
+    'No answer key page: student copies only, one per variant, and no key to '
+    + 'hand out by mistake.',
   'status.warning':
     'Careful: this document contains {what}, which are part of the file and '
     + 'will be carried into the papers. Remove them in Word (Review tab) first '
@@ -281,6 +286,7 @@ const EL: Record<string, string> = {
   'step1.title': 'Επιλέξτε το διαγώνισμα',
   'step1.choose': 'Επιλέξτε αρχείο .docx',
   'step1.drag': 'ή σύρετέ το εδώ',
+  'samples.summary': 'Πρώτη φορά εδώ; Ξεκινήστε από ένα δείγμα διαγώνισμα',
   'samples.intro':
     'Πρώτη φορά; Ξεκινήστε από ένα δείγμα. Φορτώστε ένα για να δείτε τι βγαίνει· '
     + 'κατεβάστε ένα και ανοίξτε το στο Word για να δείτε ακριβώς πώς πρέπει να '
@@ -326,8 +332,14 @@ const EL: Record<string, string> = {
   'step3.download': 'Κατεβάστε το papers.zip',
 
   // -- what the page says while it works ---------------------------------
-  'status.reading': 'Ανάγνωση του {name}…',
-  'status.source': '{count} ερωτήσεις, επιλογές με δείκτες {markers} — {name}',
+  'status.reading': 'Ανάγνωση…',
+  'status.source': '{count} ερωτήσεις, επιλογές με δείκτες {markers}',
+  'status.source.titled':
+    '{title} — {count} ερωτήσεις, επιλογές με δείκτες {markers}',
+  'status.haskey':
+    'Βρέθηκαν απαντήσεις: κάθε παραλλαγή παίρνει αντίτυπο μαθητή και αντίτυπο '
+    + 'καθηγητή.',
+  'status.failed': 'Το έγγραφο δεν μπόρεσε να διαβαστεί.',
   'status.building': 'Δημιουργία των φυλλαδίων…',
   'status.ready':
     '{variants} παραλλαγές έτοιμες: {papers} έγγραφα. Μοιράστε τα αντίτυπα '
@@ -336,9 +348,8 @@ const EL: Record<string, string> = {
     '{variants} παραλλαγές έτοιμες: {papers} αντίτυπα μαθητή. Δεν υπάρχουν '
     + 'αντίτυπα καθηγητή, επειδή το διαγώνισμα δεν είχε φύλλο απαντήσεων.',
   'status.nokey':
-    'Το διαγώνισμα δεν έχει σελίδα απαντήσεων, οπότε θα παραχθούν μόνο αντίτυπα '
-    + 'μαθητή — ένα ανά παραλλαγή, και καμία απάντηση για να μοιραστεί κατά '
-    + 'λάθος.',
+    'Χωρίς σελίδα απαντήσεων: μόνο αντίτυπα μαθητή, ένα ανά παραλλαγή, και '
+    + 'καμία απάντηση για να μοιραστεί κατά λάθος.',
   'status.warning':
     'Προσοχή: το έγγραφο περιέχει {what}, που είναι μέρος του αρχείου και θα '
     + 'μεταφερθούν στα φυλλάδια. Αν δεν πρέπει να τα δει η τάξη, αφαιρέστε τα '

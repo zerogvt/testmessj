@@ -184,7 +184,24 @@
           <p class="hint" data-i18n="step1.drag">or drag it here</p>
         </div>
 
-        <div class="samples">
+        <!--
+          What was read, where it was read: the answer to "did that work?"
+          belongs directly under the thing you just did, not below a block of
+          advice for first-time users.  The file's own name comes first,
+          because that is what the teacher recognises.
+        -->
+        <div id="source" class="outcome" role="status" hidden>
+          <span class="outcome-mark" aria-hidden="true"></span>
+          <div class="outcome-text">
+            <p class="outcome-name" id="source-name"></p>
+            <p class="outcome-detail" id="source-detail"></p>
+            <p class="outcome-note" id="source-note"></p>
+          </div>
+        </div>
+        <p id="warning" class="outcome warn" role="status" hidden></p>
+
+        <details class="samples">
+          <summary data-i18n="samples.summary">First time here? Start from a sample test</summary>
           <p class="hint" data-i18n="samples.intro">
             New to this? Start from a sample. Load one to see what comes out;
             download one and open it in Word to see exactly how a test has to be
@@ -226,9 +243,7 @@
             Greek-lettered paper stays Greek-lettered. The third has no answer
             key page at all, and makes student copies only.
           </p>
-        </div>
-        <p id="source" class="status" role="status"></p>
-        <p id="warning" class="status warn" role="status"></p>
+        </details>
       </section>
 
       <section class="step" aria-labelledby="step-settings">

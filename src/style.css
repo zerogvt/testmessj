@@ -9,8 +9,14 @@
   --accent: #7a3e12;
   --accent-ink: #ffffff;
   --ok: #2c6b3f;
+  --ok-bg: #edf5ee;
+  --ok-line: #5c9070;
   --warn: #8a5a12;
+  --warn-bg: #fdf7e8;
+  --warn-line: #c89a2b;
   --error: #9b2c22;
+  --error-bg: #fbeeec;
+  --error-line: #c2695c;
   --banner-bg: #fdf3d8;
   --banner-line: #c89a2b;
   --banner-ink: #4a3608;
@@ -28,8 +34,14 @@
     --accent: #e0a678;
     --accent-ink: #231a12;
     --ok: #8fd0a3;
+    --ok-bg: #18271d;
+    --ok-line: #497f5d;
     --warn: #e8c07a;
+    --warn-bg: #2a2313;
+    --warn-line: #8b6f26;
     --error: #f2938a;
+    --error-bg: #2b1715;
+    --error-line: #96453c;
     --banner-bg: #33290f;
     --banner-line: #9c7c28;
     --banner-ink: #f4e4bd;
@@ -224,6 +236,26 @@ h2 {
   border-top: 1px solid var(--line);
 }
 
+/* Folded by default: a teacher who has done this before should see their own
+   document, not the instructions for their first time. */
+.samples > summary {
+  cursor: pointer;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.9rem;
+  color: var(--accent);
+}
+
+.samples > summary:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.samples[open] > summary {
+  margin-bottom: 0.4rem;
+  color: var(--muted);
+}
+
 .sample-list {
   margin: 0.7rem 0;
   padding: 0;
@@ -360,6 +392,117 @@ button.link {
   display: flex;
   flex-wrap: wrap;
   gap: 0.8rem;
+}
+
+/* The answer to "did that work?": one card, the file's own name first, the
+   facts read out of it underneath.  Colour carries the verdict, and the tints
+   are muted enough to sit beside the rest of the page rather than shout over
+   it. */
+.outcome {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  margin: 1.1rem 0 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.outcome[hidden] {
+  display: none;
+}
+
+.outcome.ok {
+  border-color: var(--ok-line);
+  background: var(--ok-bg);
+}
+
+.outcome.error {
+  border-color: var(--error-line);
+  background: var(--error-bg);
+}
+
+.outcome.warn {
+  border-color: var(--warn-line);
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.outcome-mark::before {
+  content: '…';
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--line);
+  color: var(--panel);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.outcome.ok .outcome-mark::before {
+  content: '✓';
+  background: var(--ok-line);
+  color: #ffffff;
+}
+
+.outcome.error .outcome-mark::before {
+  content: '✕';
+  background: var(--error-line);
+  color: #ffffff;
+}
+
+.outcome.warn::before {
+  content: '!';
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--warn-line);
+  color: #ffffff;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.outcome-text {
+  min-width: 0;
+}
+
+.outcome-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.outcome.ok .outcome-name {
+  color: var(--ok);
+}
+
+.outcome.error .outcome-name {
+  color: var(--error);
+}
+
+.outcome-detail,
+.outcome-note {
+  margin: 0.2rem 0 0;
+}
+
+.outcome-note {
+  color: var(--muted);
+}
+
+.outcome-detail:empty,
+.outcome-note:empty {
+  display: none;
 }
 
 .status {
